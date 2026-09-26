@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Jblog · 网站结构树状图</title>
+<style>
+  :root {
+    --bg: #eef2f7;
+    --text: #1f2430;
+    --muted: #6b7385;
+    --line: #c3ccdb;
+    --accent: #0ea5e9;
+    --front: #0ea5e9;
+    --admin: #f97316;
+    --data: #8b5cf6;
+    --shell: #10b981;
+    --card: rgba(255, 255, 255, 0.72);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117;
+      --text: #e7ecf3;
+      --muted: #97a1b3;
+      --line: #333c4a;
+      --card: rgba(255, 255, 255, 0.05);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 32px 24px 80px;
+    background:
+      radial-gradient(900px 500px at 12% -10%, rgba(14, 165, 233, 0.18), transparent 60%),
+      radial-gradient(700px 420px at 95% 8%, rgba(139, 92, 246, 0.16), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    font: 14px/1.6 -apple-system, "Segoe UI", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 24px; font-weight: 800; margin: 0 0 6px; }
+  .sub { color: var(--muted); margin: 0 0 20px; font-size: 13px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+  .legend span {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 999px;
+    background: var(--card); border: 1px solid var(--line);
+    font-size: 12px; font-weight: 600;
+  }
+  i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .toolbar { display: flex; gap: 8px; margin-bottom: 18px; }
+  .toolbar button {
+    padding: 6px 14px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--card); color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  .panel {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    padding: 20px 22px; backdrop-filter: blur(14px);
+  }
+  ul.tree, ul.tree ul { list-style: none; margin: 0; padding-left: 22px; }
+  ul.tree { padding-left: 0; }
+  ul.tree ul { border-left: 1px dashed var(--line); margin-left: 6px; }
+  li { position: relative; padding: 3px 0; }
+  details > summary { cursor: pointer; }
+  summary { list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  .node { display: inline-flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .path {
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 13px; font-weight: 700; color: var(--accent);
+  }
+  .name { font-weight: 700; }
+  .desc { color: var(--muted); font-size: 12.5px; }
+  .tag {
+    font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 6px;
+    border: 1px solid currentColor;
+  }
+  .t-shell { color: var(--shell); }
+  .t-front { color: var(--front); }
+  .t-admin { color: var(--admin); }
+  .t-data { color: var(--data); }
+  .t-hidden { color: var(--muted); }
+  .arrow::before { content: '▸ '; color: var(--muted); }
+  details[open] > summary .arrow::before { content: '▾ '; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Jblog · 网站结构树状图</h1>
+  <p class="sub">React 19 + TypeScript + Vite · 路由 / 页面 / 组件 / 数据层依赖关系（点击 ▸ 可展开收起）</p>
+
+  <div class="legend">
+    <span><i style="background:var(--shell)"></i>应用外壳</span>
+    <span><i style="background:var(--front)"></i>前台页面</span>
+    <span><i style="background:var(--admin)"></i>后台管理</span>
+    <span><i style="background:var(--data)"></i>数据层 / 工具</span>
+  </div>
+
+  <div class="toolbar">
+    <button onclick="toggleAll(true)">全部展开</button>
+    <button onclick="toggleAll(false)">全部收起</button>
+  </div>
+
+  <div class="panel">
+    <ul class="tree">
+      <li>
+        <details open>
+          <summary><span class="node"><span class="name">Jblog</span><span class="tag t-shell">APP</span><span class="desc">src/main.tsx → App.tsx</span></span></summary>
+          <ul>
+            <li><span class="node"><span class="name">AppProvider</span><span class="tag t-shell">SHELL</span><span class="desc">context/AppContext · 主题 / 语言 / t()</span></span></li>
+            <li>
+              <details open>
+                <summary><span class="node"><span class="name">BrowserRouter 全局外壳</span><span class="tag t-shell">SHELL</span></span></summary>
+                <ul>
+                  <li><span class="node"><span class="path">&lt;GlassBackground/&gt;</span><span class="desc">液态玻璃背景 · siteMedia 自定义图/视频</span></span></li>
+                  <li><span class="node"><span class="path">&lt;GlassShatter/&gt;</span><span class="desc">玻璃砸破特效 · hiShatterBus</span></span></li>
+                  <li><span class="node"><span class="path">&lt;WelcomeModal/&gt;</span><span class="desc">进站欢迎弹窗</span></span></li>
+                  <li><span class="node"><span class="path">&lt;Navbar/&gt;</span><span class="desc">logo 动效 · 6 导航 · 时钟 · 中/EN · 主题切换</span></span></li>
+                  <li><span class="node"><span class="path">&lt;FloatingToolbar/&gt;</span><span class="desc">左栏：音乐(进站自动播放) / 刷新 / 关于 / 回顶</span></span></li>
+                  <li><span class="node"><span class="path">&lt;PageTransition/&gt;</span><span class="desc">页面转场容器 → Routes</span></span></li>
+                </ul>
+              </details>
+            </li>
+
+            <li>
+              <details open>
+                <summary><span class="node"><span class="name">前台路由</span><span class="tag t-front">FRONT</span></span></summary>
+                <ul>
+                  <li>
+                    <details>
+                      <summary><span class="node"><span class="path">/</span><span class="name">Home</span><span class="desc">首页</span></span></summary>
+                      <ul>
+                        <li><span class="node"><span class="desc">useArticles · useAnnouncements · useFeaturedId</span></span></li>
+                        <li><span class="node"><span class="desc">SearchBar · HiButton · 卡片入口(关于/需知/公告/作者志/技栈)</span></span></li>
+                      </ul>
+                    </details>
+                  </li>
+                  <li><span class="node"><span class="path">/journal</span><span class="name">Journal</span><span class="desc">作者志（仅作者志分类）· useArticles · useHiEffect</span></span></li>
+                  <li>
+                    <details>
+                      <summary><span class="node"><span class="path">/tech</span><span class="name">TechStack</span><span class="desc">技栈 · useTechGroups（左栏 sticky 25%）</span></span></summary>
+                      <ul>
+                        <li><span class="node"><span class="path">/tech/:slug</span><span class="name">TechArticleDetail</span><span class="desc">TECH_GROUPS · useHiEffect</span></span></li>
+                      </ul>
+                    </details>
+                  </li>
+                  <li><span class="node"><span class="path">/exhibition</span><span class="name">Exhibition</span><span class="desc">图展 · useGalleryArts · useGalleryCategories · CameraScene(3D)</span></span></li>
+                  <li><span class="node"><span class="path">/resources</span><span class="name">ResourcesPage</span><span class="desc">资源 · useResources · useResourceGroups（左栏 sticky 25%）</span></span></li>
+                  <li><span class="node"><span class="path">/message</span><span class="name">Message</span><span class="desc">留言 · useMessages/saveMessage · contentFilter 敏感词拦截</span></span></li>
+                  <li><span class="node"><span class="path">/article/:slug</span><span class="name">ArticleDetail</span><span class="desc">文章详情 · useArticles</span></span></li>
+                  <li><span class="node"><span class="path">/about</span><span class="name">About</span><span class="desc">作者 Jack · 皮克工作室</span></span></li>
+                  <li><span class="node"><span class="path">/site-info</span><span class="name">SiteInfo</span><span class="desc">网站需知全文 + 最新须知(notice)</span></span></li>
+                  <li><span class="node"><span class="path">/announcements</span><span class="name">Announcements</span><span class="desc">公告栏(news)</span></span></li>
+                  <li>
+                    <details>
+                      <summary><span class="node"><span class="name">隐藏路由</span><span class="tag t-hidden">仅直链</span></span></summary>
+                      <ul>
+                        <li><span class="node"><span class="path">/topics</span><span class="name">Topics</span><span class="desc">搜索结果 · searchArticles · ArticleCard</span></span></li>
+                        <li><span class="node"><span class="path">/archive</span><span class="name">Resources</span><span class="desc">归档页 · useArticles</span></span></li>
+                        <li><span class="node"><span class="path">/gallery</span><span class="name">Gallery</span><span class="desc">旧图展列表 · useArticles</span></span></li>
+                      </ul>
+                    </details>
+                  </li>
+                  <li><span class="node"><span class="path">*</span><span class="desc">兜底 → Home</span></span></li>
+                </ul>
+              </details>
+            </li>
+
+            <li>
+              <details open>
+                <summary><span class="node"><span class="path">/admin</span><span class="name">AdminLayout</span><span class="tag t-admin">ADMIN</span><span class="desc">登录密码 blog-admin-password</span></span></summary>
+                <ul>
+                  <li><span class="node"><span class="path">index</span><span class="name">Dashboard</span><span class="desc">聚合各 store 计数统计</span></span></li>
+                  <li>
+                    <details>
+                      <summary><span class="node"><span class="path">articles</span><span class="name">ArticleList</span><span class="desc">单条/批量删除需删除密码</span></span></summary>
+                      <ul>
+                        <li><span class="node"><span class="path">articles/new</span><span class="name">ArticleEditor</span></span></li>
+                        <li><span class="node"><span class="path">articles/edit/:id</span><span class="name">ArticleEditor</span></span></li>
+                      </ul>
+                    </details>
+                  </li>
+                  <li><span class="node"><span class="path">messages</span><span class="name">MessageManager</span></span></li>
+                  <li><span class="node"><span class="path">announcements</span><span class="name">AnnouncementManager</span><span class="desc">news / notice 两类发布</span></span></li>
+                  <li><span class="node"><span class="path">gallery</span><span class="name">GalleryManager</span><span class="desc">作品上传/链接 + 分类增删</span></span></li>
+                  <li><span class="node"><span class="path">resources</span><span class="name">ResourceManager</span><span class="desc">条目 + 自定义分类</span></span></li>
+                  <li><span class="node"><span class="path">tech</span><span class="name">TechManager</span><span class="desc">技栈自定义分类增删</span></span></li>
+                  <li><span class="node"><span class="path">media</span><span class="name">MediaLibrary</span></span></li>
+                  <li><span class="node"><span class="path">settings</span><span class="name">Settings</span><span class="desc">自定义 / 社交链接 / 背景 / 音乐 / 删除密码 / 数据管理</span></span></li>
+                </ul>
+              </details>
+            </li>
+
+            <li>
+              <details open>
+                <summary><span class="node"><span class="name">数据层 src/data</span><span class="tag t-data">DATA</span><span class="desc">localStorage + CustomEvent + useX() 钩子</span></span></summary>
+                <ul>
+                  <li><span class="node"><span class="path">articles.ts</span><span class="desc">blog-published-articles · 文章 + 置顶 featured</span></span></li>
+                  <li><span class="node"><span class="path">messages.ts</span><span class="desc">留言</span></span></li>
+                  <li><span class="node"><span class="path">announcements.ts</span><span class="desc">blog-announcements · kind: news | notice</span></span></li>
+                  <li><span class="node"><span class="path">gallery.ts</span><span class="desc">图展作品 + 分类</span></span></li>
+                  <li><span class="node"><span class="path">resources.ts</span><span class="desc">资源条目 + blog-resource-groups</span></span></li>
+                  <li><span class="node"><span class="path">techStack.ts</span><span class="desc">技栈条目 + blog-tech-groups</span></span></li>
+                  <li><span class="node"><span class="path">siteMedia.ts</span><span class="desc">背景 / 音乐设置，保存即生效</span></span></li>
+                  <li><span class="node"><span class="path">deleteGuard.ts</span><span class="desc">blog-delete-password 删除守卫</span></span></li>
+                  <li><span class="node"><span class="path">featured.ts</span><span class="desc">首页精选读取</span></span></li>
+                </ul>
+              </details>
+            </li>
+
+            <li>
+              <details>
+                <summary><span class="node"><span class="name">公共组件 / 钩子 / 工具</span><span class="tag t-data">LIB</span></span></summary>
+                <ul>
+                  <li><span class="node"><span class="path">components/</span><span class="desc">AnimateIn · ArticleCard · CameraScene · FloatingToolbar · GlassBackground · GlassShatter · HiButton · Navbar · PageTransition · SearchBar · WelcomeModal</span></span></li>
+                  <li><span class="node"><span class="path">hooks/useHiEffect.ts</span><span class="desc">嗨一下：20s 明暗+中英切换 → 玻璃破碎 → 30s 复原</span></span></li>
+                  <li><span class="node"><span class="path">utils/</span><span class="desc">search · contentFilter · siteGuard(防盗链/反爬) · hiShatterBus</span></span></li>
+                </ul>
+              </details>
+            </li>
+
+            <li>
+              <details>
+                <summary><span class="node"><span class="name">静态资源 public/</span><span class="tag t-data">ASSET</span></span></summary>
+                <ul>
+                  <li><span class="node"><span class="path">logo.png · favicon.svg</span><span class="desc">站点标识</span></span></li>
+                  <li><span class="node"><span class="path">images/</span><span class="desc">about / site-info / announcements banner · avatar</span></span></li>
+                  <li><span class="node"><span class="path">models/canon-camera.glb</span><span class="desc">图展 3D 相机</span></span></li>
+                  <li><span class="node"><span class="path">music/memory-reboot.mp3</span><span class="desc">网站音乐</span></span></li>
+                  <li><span class="node"><span class="path">videos/beach.mp4 · robots.txt</span><span class="desc">视频背景 / 屏蔽爬虫</span></span></li>
+                </ul>
+              </details>
+            </li>
+          </ul>
+        </details>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<script>
+  function toggleAll(open) {
+    document.querySelectorAll('details').forEach((d) => (d.open = open));
+  }
+</script>
+</body>
+</html>

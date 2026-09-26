@@ -1,0 +1,50 @@
+# Jblog 爬虫策略
+# 说明：默认屏蔽全部爬虫（含搜索引擎收录）。
+# 若希望被 Google/Bing 正常收录，把下面的 Disallow: / 改成 Disallow: /admin
+# 并按需保留各 AI 抓取器的屏蔽条目。
+
+User-agent: *
+Disallow: /
+
+# 后台与本地数据入口，任何情况下都不抓取
+User-agent: *
+Disallow: /admin
+Disallow: /message
+Disallow: /site-info
+
+# 显式屏蔽主流 AI 训练 / 内容搬运抓取器
+User-agent: GPTBot
+User-agent: ChatGPT-User
+User-agent: OAI-SearchBot
+User-agent: ClaudeBot
+User-agent: Claude-SearchBot
+User-agent: CCBbot
+User-agent: GPTBot-SearchBot
+User-agent: PerplexityBot
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: Bytespider
+User-agent: Amazonbot
+User-agent: cohere-ai
+User-agent: Diffbot
+User-agent: FacebookBot
+User-agent: YouBot
+User-agent: Qwantify
+Disallow: /
+
+# 已备案国内爬虫同样屏蔽（需要百度/搜狗收录时删除对应条目）
+User-agent: Baiduspider
+User-agent: Sogou web spider
+User-agent: 360Spider
+User-agent: YisouSpider
+User-agent: HaosouSpider
+Disallow: /
+
+# 静态资源不做图片索引
+User-agent: *
+Disallow: /images/
+Disallow: /models/
+Disallow: /videos/
+Disallow: /music/
+
+Sitemap: https://REPLACE_WITH_YOUR_DOMAIN/sitemap.xml

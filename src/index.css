@@ -1,0 +1,237 @@
+/* ========================================================
+   LIQUID GLASS — Global Styles
+   ======================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* Light theme tokens */
+  --bg-1: #e8eef5;
+  --bg-2: #f5eef8;
+  --bg-3: #eef5ff;
+  --text-primary: #1a1d24;
+  --text-secondary: #4a4f5c;
+  --text-muted: #7a8090;
+  --glass-bg: rgba(255, 255, 255, 0.35);
+  --glass-border: rgba(255, 255, 255, 0.55);
+  --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+  --glass-shadow-strong: 0 12px 48px rgba(31, 38, 135, 0.22);
+  --accent: #6366f1;
+  --accent-soft: rgba(99, 102, 241, 0.18);
+  --border-subtle: rgba(255, 255, 255, 0.35);
+}
+
+[data-theme='dark'] {
+  --bg-1: #0f1020;
+  --bg-2: #1a1033;
+  --bg-3: #0a1a2a;
+  --text-primary: #f0f2f8;
+  --text-secondary: #b4bac8;
+  --text-muted: #6b7080;
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --glass-shadow-strong: 0 12px 48px rgba(0, 0, 0, 0.55);
+  --accent: #818cf8;
+  --accent-soft: rgba(129, 140, 248, 0.22);
+  --border-subtle: rgba(255, 255, 255, 0.1);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  color: var(--text-primary);
+  background: var(--bg-1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+/* 资源保护：图片不可拖拽保存、不可选中；爬虫命中时隐藏图片 */
+img {
+  -webkit-user-drag: none;
+  user-select: none;
+  pointer-events: auto;
+}
+
+html[data-crawler='1'] img {
+  visibility: hidden !important;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+input {
+  font-family: inherit;
+  outline: none;
+  border: none;
+}
+
+/* ========================================================
+   LIQUID GLASS — Reusable utility class
+   ======================================================== */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  box-shadow: var(--glass-shadow);
+  position: relative;
+  overflow: hidden;
+  transition: background 0.35s ease, box-shadow 0.35s ease,
+    border-color 0.35s ease;
+}
+
+.glass:hover {
+  box-shadow: var(--glass-shadow-strong);
+}
+
+/* Highlight sweep on hover — liquid sheen */
+.glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.18) 0%,
+    rgba(255, 255, 255, 0) 50%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+[data-theme='dark'] .glass::before {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+}
+
+/* Edge rim light */
+.glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.55),
+    rgba(255, 255, 255, 0.05) 40%,
+    rgba(255, 255, 255, 0.02) 60%,
+    rgba(255, 255, 255, 0.25)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.glass-strong {
+  backdrop-filter: blur(30px) saturate(200%);
+  -webkit-backdrop-filter: blur(30px) saturate(200%);
+}
+
+/* Exhibition card hover overlay */
+.glass:hover .exh-overlay,
+.glass:hover .exh-caption {
+  opacity: 1;
+}
+
+/* ========================================================
+   Scrollbar — slim glassy scrollbar
+   ======================================================== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.3);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.5);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
+/* ========================================================
+   HI-SHAKE — "嗨一下" text bounce effect
+   ======================================================== */
+
+@keyframes hi-bounce {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  12% { transform: translate(-3px, -7px) rotate(-2deg); }
+  25% { transform: translate(4px, -3px) rotate(2deg); }
+  37% { transform: translate(-2px, -6px) rotate(-1.5deg); }
+  50% { transform: translate(3px, -1px) rotate(1.5deg); }
+  62% { transform: translate(-3px, -4px) rotate(-1deg); }
+  75% { transform: translate(2px, -2px) rotate(1deg); }
+  87% { transform: translate(-1px, -3px) rotate(-0.5deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+html.hi-shake-active h1,
+html.hi-shake-active h2,
+html.hi-shake-active h3,
+html.hi-shake-active h4,
+html.hi-shake-active h5,
+html.hi-shake-active p,
+html.hi-shake-active span,
+html.hi-shake-active a,
+html.hi-shake-active li,
+html.hi-shake-active button,
+html.hi-shake-active label,
+html.hi-shake-active figcaption,
+html.hi-shake-active blockquote,
+html.hi-shake-active code,
+html.hi-shake-active pre,
+html.hi-shake-active strong,
+html.hi-shake-active em,
+html.hi-shake-active small,
+html.hi-shake-active td,
+html.hi-shake-active th,
+html.hi-shake-active input,
+html.hi-shake-active textarea {
+  /* 0.35s x 43 ≈ 15s, kept finite because the Hi effect must not loop */
+  animation: hi-bounce 0.35s ease-in-out 43 !important;
+}
