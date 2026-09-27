@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Save, RotateCcw, Globe, User, Link2, Palette, Check, Shield, Image as ImageIcon, Music, Upload, Trash2 } from 'lucide-react';
 import { setDeletePassword } from '../../data/deleteGuard';
 import { useApp } from '../../context/AppContext';
-import { useSiteMedia, saveSiteMedia, fileToMediaDataUrl } from '../../data/siteMedia';
+import { useSiteMedia, loadSiteMedia, saveSiteMedia, saveLocalMediaFile, isLocalMediaRef, clearLocalMediaFiles } from '../../data/siteMedia';
 import type { SiteMedia } from '../../data/siteMedia';
 
 interface BlogSettings {
@@ -56,6 +56,11 @@ function loadSettings(): BlogSettings {
   }
 }
 
+// 本地上传的媒体只存了 IndexedDB 指针，没有可编辑的链接，输入框留空
+function draftFromStoredRef(ref: string): string {
+  return isLocalMediaRef(ref) ? '' : ref;
+}
+
 export default function Settings() {
   const { t, setTheme, setLang } = useApp();
   const [settings, setSettings] = useState<BlogSettings>(loadSettings);
@@ -67,9 +72,9 @@ export default function Settings() {
   const [delPwMsg, setDelPwMsg] = useState('');
   const media = useSiteMedia();
   const [mediaMsg, setMediaMsg] = useState('');
-  const [bgUrlDraft, setBgUrlDraft] = useState(media.bgUrl);
-  const [musicUrlDraft, setMusicUrlDraft] = useState(media.musicUrl);
-  const [hiUrlDraft, setHiUrlDraft] = useState(media.hiMusicUrl);
+  const [bgUrlDraft, setBgUrlDraft] = useState(() => draftFromStoredRef(loadSiteMedia().bgUrl));
+  const [musicUrlDraft, setMusicUrlDraft] = useState(() => draftFromStoredRef(loadSiteMedia().musicUrl));
+  const [hiUrlDraft, setHiUrlDraft] = useState(() => draftFromStoredRef(loadSiteMedia().hiMusicUrl));
 
   const showMediaMsg = (msg: string) => {
     setMediaMsg(msg);
@@ -78,27 +83,27 @@ export default function Settings() {
 
   const patchMedia = (p: Partial<SiteMedia>) => {
     try {
-      saveSiteMedia({ ...media, ...p });
+      saveSiteMedia({ ...loadSiteMedia(), ...p });
       showMediaMsg(t('已保存并生效', 'Saved & applied'));
     } catch {
-      showMediaMsg(t('保存失败：浏览器存储空间不足，请改用更小的文件或链接', 'Save failed: browser storage full — use a smaller file or a link'));
+      showMediaMsg(t('保存失败：浏览器存储空间不足，请重试', 'Save failed: browser storage is full — please retry'));
     }
   };
 
   const uploadMedia = async (file: File, kind: 'image' | 'video' | 'music' | 'hi') => {
     try {
-      const dataUrl = await fileToMediaDataUrl(file);
-      if (kind === 'image') patchMedia({ bgType: 'image', bgUrl: dataUrl });
-      else if (kind === 'video') patchMedia({ bgType: 'video', bgUrl: dataUrl });
+      const ref = await saveLocalMediaFile(file);
+      if (kind === 'image') patchMedia({ bgType: 'image', bgUrl: ref });
+      else if (kind === 'video') patchMedia({ bgType: 'video', bgUrl: ref });
       else if (kind === 'music') {
-        patchMedia({ musicUrl: dataUrl });
+        patchMedia({ musicUrl: ref });
         setMusicUrlDraft('');
       } else {
-        patchMedia({ hiMusicUrl: dataUrl });
+        patchMedia({ hiMusicUrl: ref });
         setHiUrlDraft('');
       }
     } catch {
-      showMediaMsg(t('文件过大（单个上限约 2.5MB）或读取失败', 'File too large (~2.5MB limit) or read failed'));
+      showMediaMsg(t('保存失败：浏览器存储空间不足或读取失败', 'Save failed: not enough browser storage or read error'));
     }
   };
 
@@ -489,7 +494,7 @@ export default function Settings() {
           {t('背景与音乐', 'Background & Music')}
         </h2>
         <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: -12, marginBottom: 16 }}>
-          {t('本区块修改后立即生效。本地上传的文件存入浏览器（单个约 2.5MB 以内），较大的媒体建议使用链接。', 'This section applies immediately. Uploaded files are stored in your browser (~2.5MB each); use links for larger media.')}
+          {t('本区块修改后立即生效。本地上传的文件保存在当前浏览器的 IndexedDB 中，不限制大小，但换设备/浏览器后不可见；需要在所有设备生效请使用链接。', 'This section applies immediately. Uploaded files are stored in this browser\'s IndexedDB with no size limit, but are invisible on other devices/browsers — use links to apply everywhere.')}
         </p>
         {mediaMsg && (
           <p style={{ fontSize: 12, color: /失败|过大|failed|large/.test(mediaMsg) ? '#ef4444' : '#10b981', marginTop: -8, marginBottom: 12 }}>
@@ -731,12 +736,13 @@ export default function Settings() {
             {t('导出所有数据', 'Export all data')}
           </button>
           <button
-            onClick={() => {
+            onClick={async () => {
               if (confirm(t('确定要清除所有本地数据吗？此操作不可撤销。', 'Clear all local data? This cannot be undone.'))) {
                 localStorage.removeItem('blog-published-articles');
                 localStorage.removeItem('blog-media-library');
                 localStorage.removeItem('blog-site-media');
                 localStorage.removeItem(SETTINGS_KEY);
+                await clearLocalMediaFiles().catch(() => undefined);
                 window.location.reload();
               }
             }}

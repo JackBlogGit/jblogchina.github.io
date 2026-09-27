@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { getHiShatter } from '../utils/hiShatterBus';
-import { loadSiteMedia, playHiMusic, stopHiMusic } from '../data/siteMedia';
+import { loadSiteMedia, playHiMusic, stopHiMusic, resolveMediaUrl } from '../data/siteMedia';
 import type { Lang, Theme } from '../context/AppContext';
 
 const MELODY = [
@@ -109,9 +109,11 @@ export function useHiEffect() {
     setActive(true);
     document.documentElement.classList.add('hi-shake-active');
 
-    const url = loadSiteMedia().hiMusicUrl;
-    if (url) playHiMusic(url);
-    else synthRef.current = playSynthMusic();
+    void resolveMediaUrl(loadSiteMedia().hiMusicUrl).then((url) => {
+      if (!activeRef.current) return;
+      if (url) playHiMusic(url);
+      else synthRef.current = playSynthMusic();
+    });
 
     getHiShatter()?.start(DURATION_MS);
 
