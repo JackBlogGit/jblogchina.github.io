@@ -1,7 +1,9 @@
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
-import { Sun, Moon, Globe, Clock } from 'lucide-react';
+import { Sun, Moon, Globe, Clock, Menu, X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useDevice } from '../hooks/useDevice';
 import { asset } from '../utils/asset';
 
 const NAV = [
@@ -16,6 +18,8 @@ const NAV = [
 export default function Navbar() {
   const { theme, toggleTheme, lang, toggleLang, t } = useApp();
   const location = useLocation();
+  const { device, isMobile } = useDevice();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const now = new Date();
   const timeStr = now.toLocaleTimeString(lang === 'zh' ? 'zh-CN' : 'en-US', {
@@ -33,12 +37,13 @@ export default function Navbar() {
       style={{
         position: 'relative',
         zIndex: 20,
-        margin: '16px 20px 0',
-        padding: '12px 20px',
+        margin: isMobile ? '10px 12px 0' : '16px 20px 0',
+        padding: isMobile ? '10px 14px' : '12px 20px',
         display: 'flex',
         alignItems: 'center',
-        gap: 16,
+        gap: isMobile ? 8 : 16,
         height: 60,
+        overflow: isMobile && menuOpen ? 'visible' : undefined,
       }}
     >
       {/* Logo */}
@@ -82,12 +87,12 @@ export default function Navbar() {
         Jblog
       </Link>
 
-      {/* Nav items */}
+      {/* Nav items — hidden on mobile, replaced by hamburger drawer */}
       <nav
         style={{
-          display: 'flex',
+          display: isMobile ? 'none' : 'flex',
           alignItems: 'center',
-          gap: 6,
+          gap: device === 'tablet' ? 2 : 6,
           marginLeft: 8,
           flex: 1,
         }}
@@ -105,7 +110,7 @@ export default function Navbar() {
                 to={item.to}
                 style={{
                   position: 'relative',
-                  padding: '8px 16px',
+                  padding: device === 'tablet' ? '8px 10px' : '8px 16px',
                   borderRadius: 10,
                   color: active ? 'var(--accent)' : 'var(--text-secondary)',
                   fontWeight: active ? 600 : 500,
@@ -144,14 +149,14 @@ export default function Navbar() {
       </nav>
 
       {/* Right controls */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: isMobile ? 'auto' : 0 }}>
         {/* Clock */}
         <div
           className="glass"
           style={{
             padding: '6px 12px',
             borderRadius: 10,
-            display: 'flex',
+            display: isMobile ? 'none' : 'flex',
             alignItems: 'center',
             gap: 6,
             fontSize: 13,
@@ -184,7 +189,7 @@ export default function Navbar() {
           }}
         >
           <Globe size={14} />
-          {lang === 'zh' ? '中' : 'EN'}
+          {isMobile ? null : lang === 'zh' ? '中' : 'EN'}
         </motion.button>
 
         {/* Theme toggle */}
@@ -206,7 +211,90 @@ export default function Navbar() {
         >
           {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
         </motion.button>
+
+        {/* Hamburger — mobile only */}
+        {isMobile && (
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setMenuOpen((v) => !v)}
+            className="glass"
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--text-secondary)',
+            }}
+            aria-label="open menu"
+          >
+            {menuOpen ? <X size={16} /> : <Menu size={16} />}
+          </motion.button>
+        )}
       </div>
+
+      {/* Mobile drawer */}
+      <AnimatePresence>
+        {isMobile && menuOpen && (
+          <>
+            <motion.div
+              key="scrim"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMenuOpen(false)}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 40,
+                background: 'rgba(0,0,0,0.35)',
+              }}
+            />
+            <motion.nav
+              key="drawer"
+              initial={{ y: -16, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -16, opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              className="glass glass-strong"
+              style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                zIndex: 41,
+                marginTop: 8,
+                padding: '10px 12px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 4,
+                minWidth: 180,
+              }}
+            >
+              {NAV.map((item) => {
+                const active = location.pathname === item.to;
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    onClick={() => setMenuOpen(false)}
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: 10,
+                      fontSize: 15,
+                      fontWeight: active ? 700 : 500,
+                      color: active ? 'var(--accent)' : 'var(--text-secondary)',
+                      background: active ? 'var(--accent-soft)' : 'transparent',
+                    }}
+                  >
+                    {t(item.zh, item.en)}
+                  </Link>
+                );
+              })}
+            </motion.nav>
+          </>
+        )}
+      </AnimatePresence>
     </motion.header>
   );
 }

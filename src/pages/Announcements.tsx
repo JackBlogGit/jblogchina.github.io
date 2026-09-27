@@ -3,6 +3,7 @@ import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import { Megaphone, Calendar, Sparkles, Inbox } from 'lucide-react';
 import AnimateIn from '../components/AnimateIn';
 import { useApp } from '../context/AppContext';
+import { useDevice } from '../hooks/useDevice';
 import { useAnnouncements } from '../data/announcements';
 import { asset } from '../utils/asset';
 
@@ -23,6 +24,7 @@ const isRecent = (date: string) => {
 
 export default function Announcements() {
   const { t } = useApp();
+  const { isMobile } = useDevice();
 
   const all = useAnnouncements();
   // 须知类条目只在网站须知页展示，公告栏仅展示公告
@@ -35,7 +37,7 @@ export default function Announcements() {
   return (
     <div
       style={{
-        padding: '12px 24px 40px 80px',
+        padding: isMobile ? '12px 14px 32px' : '12px 24px 40px 80px',
         height: '100%',
         overflowY: 'auto',
       }}

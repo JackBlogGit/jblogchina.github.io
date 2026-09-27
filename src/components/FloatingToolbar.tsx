@@ -3,12 +3,14 @@ import { Music, RotateCcw, User, ArrowUp } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { useDevice } from '../hooks/useDevice';
 import { useSiteMedia } from '../data/siteMedia';
 import { asset } from '../utils/asset';
 
 export default function FloatingToolbar() {
   const { t } = useApp();
   const navigate = useNavigate();
+  const { isMobile } = useDevice();
   const media = useSiteMedia();
   const musicSrc = media.musicUrl || asset('/music/memory-reboot.mp3');
   const [musicOn, setMusicOn] = useState(true);
@@ -101,13 +103,14 @@ export default function FloatingToolbar() {
       transition={{ duration: 0.7, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
       style={{
         position: 'fixed',
-        left: 16,
-        top: '50%',
-        transform: 'translateY(-50%)',
+        left: 8,
+        top: isMobile ? 'auto' : '50%',
+        bottom: isMobile ? 10 : 'auto',
+        transform: isMobile ? 'none' : 'translateY(-50%)',
         zIndex: 25,
         display: 'flex',
-        flexDirection: 'column',
-        gap: 12,
+        flexDirection: isMobile ? 'row' : 'column',
+        gap: isMobile ? 8 : 12,
       }}
     >
       {items.map((it, i) => (
@@ -121,9 +124,9 @@ export default function FloatingToolbar() {
           onClick={it.onClick}
           className="glass"
           style={{
-            width: 44,
-            height: 44,
-            borderRadius: 14,
+            width: isMobile ? 36 : 44,
+            height: isMobile ? 36 : 44,
+            borderRadius: isMobile ? 11 : 14,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -156,9 +159,9 @@ export default function FloatingToolbar() {
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="glass"
             style={{
-              width: 44,
-              height: 44,
-              borderRadius: 14,
+              width: isMobile ? 36 : 44,
+              height: isMobile ? 36 : 44,
+              borderRadius: isMobile ? 11 : 14,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

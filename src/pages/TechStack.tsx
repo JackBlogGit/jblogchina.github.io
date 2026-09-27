@@ -4,6 +4,7 @@ import { Layers, Search, ArrowRight, Star, X } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import AnimateIn from '../components/AnimateIn';
 import { useApp } from '../context/AppContext';
+import { useDevice } from '../hooks/useDevice';
 import { useTechGroups } from '../data/techStack';
 
 interface TechCard {
@@ -18,6 +19,7 @@ interface TechCard {
 
 export default function TechStack() {
   const { t, lang } = useApp();
+  const { isMobile } = useDevice();
   const groups = useTechGroups();
   const [activeCat, setActiveCat] = useState('all');
   const [query, setQuery] = useState('');
@@ -57,8 +59,9 @@ export default function TechStack() {
     <div
       style={{
         display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
         gap: 20,
-        padding: '12px 24px 40px 80px',
+        padding: isMobile ? '12px 14px 32px' : '12px 24px 40px 80px',
         height: '100%',
         overflowY: 'auto',
       }}
@@ -66,9 +69,9 @@ export default function TechStack() {
       {/* ===== Left Sidebar: Categories (pinned at 25% from top) ===== */}
       <aside
         style={{
-          width: 180,
+          width: isMobile ? '100%' : 180,
           flexShrink: 0,
-          position: 'sticky',
+          position: isMobile ? 'static' : 'sticky',
           top: '25%',
           alignSelf: 'flex-start',
         }}
@@ -78,7 +81,7 @@ export default function TechStack() {
             <h4 style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 10, padding: '0 6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               {t('分类', 'Categories')}
             </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: isMobile ? 6 : 2, overflowX: isMobile ? 'auto' : undefined, paddingBottom: isMobile ? 4 : 0 }}>
               {categories.map((cat) => {
                 const isActive = activeCat === cat.key;
                 const count = cat.key === 'all' ? ALL_ITEMS.length : ALL_ITEMS.filter((i) => i.catKey === cat.key).length;
@@ -99,6 +102,8 @@ export default function TechStack() {
                       background: isActive ? 'var(--accent-soft)' : 'transparent',
                       transition: 'background 0.2s, color 0.2s',
                       position: 'relative',
+                      flexShrink: 0,
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {isActive && (
@@ -211,13 +216,14 @@ export default function TechStack() {
                     borderRadius: 14,
                     padding: '16px 20px',
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: 16,
+                    flexDirection: isMobile ? 'column' : 'row',
+                    alignItems: isMobile ? 'stretch' : 'center',
+                    gap: isMobile ? 10 : 16,
                     cursor: 'pointer',
                   }}
                 >
                 {/* Left: name + level bar */}
-                <div style={{ flex: '1 1 50%', minWidth: 0 }}>
+                <div style={{ flex: isMobile ? '1 1 auto' : '1 1 50%', minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                     <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>
                       {item.name}
@@ -233,7 +239,7 @@ export default function TechStack() {
                 </div>
 
                 {/* Middle: category + tags */}
-                <div style={{ flex: '1 1 30%', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ flex: isMobile ? '1 1 auto' : '1 1 30%', display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span
                       style={{

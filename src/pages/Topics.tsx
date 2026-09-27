@@ -5,6 +5,7 @@ import { LayoutGrid, Search, X } from 'lucide-react';
 import AnimateIn from '../components/AnimateIn';
 import ArticleCard from '../components/ArticleCard';
 import { useApp } from '../context/AppContext';
+import { useDevice } from '../hooks/useDevice';
 import { CATEGORIES, useArticles } from '../data/articles';
 import { searchArticles } from '../utils/search';
 
@@ -12,6 +13,7 @@ const TOPIC_CATS = CATEGORIES.filter((c) => c.key !== 'home' && c.key !== 'galle
 
 export default function Topics() {
   const { t } = useApp();
+  const { isMobile } = useDevice();
   const articles = useArticles();
   const [searchParams, setSearchParams] = useSearchParams();
   const urlQ = searchParams.get('q') ?? '';
@@ -37,7 +39,7 @@ export default function Topics() {
   };
 
   return (
-    <div style={{ padding: '12px 24px 40px 80px', height: '100%', overflowY: 'auto' }}>
+    <div style={{ padding: isMobile ? '12px 14px 32px' : '12px 24px 40px 80px', height: '100%', overflowY: 'auto' }}>
       <AnimateIn>
         <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
           <LayoutGrid size={26} style={{ color: 'var(--accent)' }} />

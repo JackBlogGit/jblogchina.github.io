@@ -5,6 +5,7 @@ import { useState, useCallback } from 'react';
 import AnimateIn from '../components/AnimateIn';
 import { TECH_GROUPS } from '../data/techStack';
 import { useApp } from '../context/AppContext';
+import { useDevice } from '../hooks/useDevice';
 import { useHiEffect } from '../hooks/useHiEffect';
 
 const FONT_SIZES = [13, 15, 17, 19, 21];
@@ -12,6 +13,7 @@ const FONT_SIZES = [13, 15, 17, 19, 21];
 export default function TechArticleDetail() {
   const { slug } = useParams();
   const { t, lang } = useApp();
+  const { isMobile } = useDevice();
   const navigate = useNavigate();
   const [fontSizeIdx, setFontSizeIdx] = useState(1);
   const [navOpen, setNavOpen] = useState(false);
@@ -69,6 +71,7 @@ export default function TechArticleDetail() {
           top: '50%',
           transform: 'translateY(-50%)',
           zIndex: 25,
+          display: isMobile ? 'none' : undefined,
         }}
       >
         <motion.button
@@ -289,7 +292,7 @@ export default function TechArticleDetail() {
         style={{
           position: 'relative',
           zIndex: 1,
-          padding: '20px 40px 40px 140px',
+          padding: isMobile ? '12px 14px 32px' : '20px 40px 40px 140px',
           height: '100%',
           overflowY: 'auto',
           display: 'flex',

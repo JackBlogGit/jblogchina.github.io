@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Mail, User, Send, MessageSquare, Star, AlertTriangle } from 'lucide-react';
 import AnimateIn from '../components/AnimateIn';
 import { useApp } from '../context/AppContext';
+import { useDevice } from '../hooks/useDevice';
 import { useMessages, saveMessage } from '../data/messages';
 import { inspectMessage, type FilterCategory } from '../utils/contentFilter';
 
@@ -15,6 +16,7 @@ const CATEGORY_LABELS: Record<FilterCategory, [string, string]> = {
 
 export default function Message() {
   const { t } = useApp();
+  const { isMobile } = useDevice();
   const list = useMessages();
   const [name, setName] = useState('');
   const [mail, setMail] = useState('');
@@ -57,7 +59,7 @@ export default function Message() {
   };
 
   return (
-    <div style={{ padding: '12px 24px 40px 80px', height: '100%', overflowY: 'auto' }}>
+    <div style={{ padding: isMobile ? '12px 14px 32px' : '12px 24px 40px 80px', height: '100%', overflowY: 'auto' }}>
       <AnimatePresence>
         {popup && (
           <motion.div
@@ -98,15 +100,15 @@ export default function Message() {
 
       {/* Form */}
       <AnimateIn y={20} delay={0.1}>
-        <div className="glass" style={{ padding: 24, borderRadius: 20, marginBottom: 24 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+        <div className="glass" style={{ padding: isMobile ? 14 : 24, borderRadius: 20, marginBottom: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14, marginBottom: 14 }}>
             <div className="glass" style={{ padding: '10px 14px', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
               <User size={16} style={{ color: 'var(--text-muted)' }} />
               <input
                 value={name}
                 onChange={(e) => { setName(e.target.value); if (error) setError(''); }}
                 placeholder={t('昵称', 'Nickname')}
-                style={{ flex: 1, background: 'transparent', fontSize: 14, color: 'var(--text-primary)' }}
+                style={{ flex: 1, minWidth: 0, background: 'transparent', fontSize: 14, color: 'var(--text-primary)' }}
               />
             </div>
             <div className="glass" style={{ padding: '10px 14px', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -115,7 +117,7 @@ export default function Message() {
                 value={mail}
                 onChange={(e) => setMail(e.target.value)}
                 placeholder={t('邮箱（可选）', 'Email (optional)')}
-                style={{ flex: 1, background: 'transparent', fontSize: 14, color: 'var(--text-primary)' }}
+                style={{ flex: 1, minWidth: 0, background: 'transparent', fontSize: 14, color: 'var(--text-primary)' }}
               />
             </div>
           </div>

@@ -15,6 +15,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { useDevice } from '../../hooks/useDevice';
 import { asset } from '../../utils/asset';
 
 const MENU = [
@@ -110,7 +111,7 @@ function CaptchaCanvas({ code, onRefresh }: { code: string; onRefresh: () => voi
   }, [code]);
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
       <canvas
         ref={canvasRef}
         width={140}
@@ -145,6 +146,7 @@ function CaptchaCanvas({ code, onRefresh }: { code: string; onRefresh: () => voi
 
 export default function AdminLayout() {
   const { t } = useApp();
+  const { isMobile } = useDevice();
   const location = useLocation();
   const [authPw, setAuthPw] = useState(checkAuth);
   const authed = authPw !== null;
@@ -186,11 +188,11 @@ export default function AdminLayout() {
       >
         <div
           style={{
-            width: 380,
+            width: 'min(380px, calc(100vw - 24px))',
             background: 'var(--card-bg, #fff)',
             border: '1px solid var(--border-subtle)',
             borderRadius: 16,
-            padding: 32,
+            padding: isMobile ? 20 : 32,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
@@ -255,14 +257,15 @@ export default function AdminLayout() {
             />
 
             <div style={{ marginBottom: error ? 8 : 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
                 <input
                   value={captchaInput}
                   onChange={(e) => { setCaptchaInput(e.target.value.toUpperCase()); setError(''); setErrorField(''); }}
                   placeholder={t('验证码', 'Captcha')}
                   maxLength={4}
                   style={{
-                    flex: 1,
+                    flex: '1 1 120px',
+                    minWidth: 0,
                     padding: '12px 16px',
                     background: 'var(--hover-bg, #f9fafb)',
                     border: `1px solid ${error && errorField === 'captcha' ? '#ef4444' : 'var(--border-subtle)'}`,
@@ -315,6 +318,7 @@ export default function AdminLayout() {
     <div
       style={{
         display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
         height: '100vh',
         background: 'var(--bg)',
         color: 'var(--text-primary)',
@@ -323,12 +327,14 @@ export default function AdminLayout() {
       {/* Sidebar */}
       <aside
         style={{
-          width: 220,
+          width: isMobile ? '100%' : 220,
           background: 'var(--sidebar-bg, #1a1a2e)',
-          borderRight: '1px solid var(--border-subtle)',
+          borderRight: isMobile ? 'none' : '1px solid var(--border-subtle)',
+          borderBottom: isMobile ? '1px solid var(--border-subtle)' : 'none',
           display: 'flex',
-          flexDirection: 'column',
-          padding: '20px 0',
+          flexDirection: isMobile ? 'row' : 'column',
+          alignItems: isMobile ? 'center' : undefined,
+          padding: isMobile ? '6px 8px' : '20px 0',
           flexShrink: 0,
         }}
       >
@@ -338,6 +344,7 @@ export default function AdminLayout() {
             padding: '0 20px 24px',
             borderBottom: '1px solid var(--border-subtle)',
             marginBottom: 16,
+            display: isMobile ? 'none' : undefined,
           }}
         >
           <Link
@@ -368,7 +375,7 @@ export default function AdminLayout() {
         </div>
 
         {/* Menu */}
-        <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4, padding: '0 12px' }}>
+        <nav style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: isMobile ? 2 : 4, padding: isMobile ? 0 : '0 12px', overflowX: isMobile ? 'auto' : undefined }}>
           {MENU.map((item) => {
             const active = location.pathname === item.to || (item.to !== '/admin' && location.pathname.startsWith(item.to));
             return (
@@ -380,13 +387,15 @@ export default function AdminLayout() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 10,
-                  padding: '10px 12px',
+                  padding: isMobile ? '8px 10px' : '10px 12px',
                   borderRadius: 8,
                   color: active ? 'var(--accent)' : 'var(--text-secondary)',
                   background: active ? 'var(--accent-soft)' : 'transparent',
                   fontWeight: active ? 600 : 500,
                   fontSize: 14,
                   transition: 'all 0.2s',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}
               >
                 <item.icon size={18} />
@@ -397,7 +406,7 @@ export default function AdminLayout() {
         </nav>
 
         {/* Logout + Back */}
-        <div style={{ padding: '0 12px', borderTop: '1px solid var(--border-subtle)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{ padding: isMobile ? '0 4px' : '0 12px', borderTop: isMobile ? 'none' : '1px solid var(--border-subtle)', paddingTop: isMobile ? 0 : 16, display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: isMobile ? 2 : 4, flexShrink: 0 }}>
           <button
             onClick={() => {
               localStorage.removeItem(AUTH_KEY);
@@ -443,7 +452,7 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main content */}
-      <main style={{ flex: 1, overflow: 'auto', padding: 24 }}>
+      <main style={{ flex: 1, overflow: 'auto', padding: isMobile ? 12 : 24 }}>
         <Outlet />
       </main>
     </div>

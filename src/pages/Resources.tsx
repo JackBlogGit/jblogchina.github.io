@@ -3,10 +3,12 @@ import { motion } from 'framer-motion';
 import { Archive, Clock } from 'lucide-react';
 import AnimateIn from '../components/AnimateIn';
 import { useApp } from '../context/AppContext';
+import { useDevice } from '../hooks/useDevice';
 import { useArticles } from '../data/articles';
 
 export default function Resources() {
   const { t } = useApp();
+  const { isMobile } = useDevice();
   const articles = useArticles();
 
   // group by year-month
@@ -18,7 +20,7 @@ export default function Resources() {
   const keys = Object.keys(groups).sort((a, b) => (a < b ? 1 : -1));
 
   return (
-    <div style={{ padding: '12px 24px 40px 80px', height: '100%', overflowY: 'auto' }}>
+    <div style={{ padding: isMobile ? '12px 14px 32px' : '12px 24px 40px 80px', height: '100%', overflowY: 'auto' }}>
       <AnimateIn>
         <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
           <Archive size={26} style={{ color: 'var(--accent)' }} />
@@ -97,7 +99,7 @@ export default function Resources() {
                             }}
                           />
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2, display: 'flex', gap: 6, alignItems: 'center' }}>
+                            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2, display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', minWidth: 0 }}>
                               <span style={{ fontWeight: 700, color: 'var(--accent)' }}>{t(a.catZh, a.catEn)}</span>
                               <span>·</span>
                               <span>{a.date}</span>

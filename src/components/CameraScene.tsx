@@ -76,9 +76,10 @@ function LoadingFallback() {
 interface CameraSceneProps {
   modelUrl?: string;
   opacity?: number;
+  zIndex?: number;
 }
 
-export default function CameraScene({ modelUrl = asset('/models/canon-camera.glb'), opacity = 0.5 }: CameraSceneProps) {
+export default function CameraScene({ modelUrl = asset('/models/canon-camera.glb'), opacity = 0.5, zIndex = 0 }: CameraSceneProps) {
   const mouse = useRef({ x: 0, y: 0 });
   const [ready, setReady] = useState(false);
 
@@ -97,7 +98,7 @@ export default function CameraScene({ modelUrl = asset('/models/canon-camera.glb
       style={{
         position: 'absolute',
         inset: 0,
-        zIndex: 0,
+        zIndex,
         opacity: ready ? opacity : 0,
         transition: 'opacity 1.2s ease',
         pointerEvents: 'none',

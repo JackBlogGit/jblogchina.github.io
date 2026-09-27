@@ -88,7 +88,7 @@ export default function Exhibition() {
           zIndex: 0,
         }}
       />
-      <CameraScene opacity={0.35} />
+      <CameraScene opacity={0.35} zIndex={2} />
 
       <div style={{ position: 'relative', zIndex: 1, padding: '12px 24px 40px 80px', height: '100%', overflowY: 'auto' }}>
         <AnimateIn>

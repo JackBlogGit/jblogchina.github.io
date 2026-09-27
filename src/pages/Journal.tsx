@@ -6,9 +6,11 @@ import AnimateIn from '../components/AnimateIn';
 import { useArticles } from '../data/articles';
 import { useApp } from '../context/AppContext';
 import { useHiEffect } from '../hooks/useHiEffect';
+import { useDevice } from '../hooks/useDevice';
 
 export default function Journal() {
   const { t, lang } = useApp();
+  const { isMobile } = useDevice();
   const allArticles = useArticles();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -54,13 +56,14 @@ export default function Journal() {
         transition={{ duration: 0.7, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
         style={{
           position: 'fixed',
-          right: 16,
-          top: '30%',
+          right: isMobile ? 10 : 16,
+          top: isMobile ? 'auto' : '30%',
+          bottom: isMobile ? 90 : undefined,
           zIndex: 25,
           display: 'flex',
           flexDirection: 'column',
           gap: 10,
-          width: 150,
+          width: isMobile ? 110 : 150,
         }}
       >
         {/* Hi shake button */}
@@ -85,7 +88,8 @@ export default function Journal() {
           {t('嗨一下~', 'Hi shake~')}
         </motion.button>
 
-        {/* TOC Panel */}
+        {/* TOC Panel — hidden on phone */}
+        {!isMobile && (
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -144,6 +148,7 @@ export default function Journal() {
             )}
           </div>
         </motion.div>
+        )}
 
         {/* Scroll to top */}
         <motion.button
@@ -172,7 +177,7 @@ export default function Journal() {
       <div
         ref={scrollRef}
         style={{
-          padding: '20px 200px 40px 60px',
+          padding: isMobile ? '12px 14px 32px' : '20px 200px 40px 60px',
           height: '100%',
           overflowY: 'auto',
           display: 'flex',

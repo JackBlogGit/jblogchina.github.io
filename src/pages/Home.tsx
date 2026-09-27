@@ -17,6 +17,7 @@ import AnimateIn from '../components/AnimateIn';
 import HiButton from '../components/HiButton';
 import SearchBar from '../components/SearchBar';
 import { useApp } from '../context/AppContext';
+import { useDevice } from '../hooks/useDevice';
 import { useArticles } from '../data/articles';
 import { asset } from '../utils/asset';
 import { useAnnouncements } from '../data/announcements';
@@ -34,6 +35,7 @@ const AUTHOR_AVATAR = asset('/images/avatar.png');
 export default function Home() {
   const { t } = useApp();
   const navigate = useNavigate();
+  const { isMobile, isTablet } = useDevice();
   const articles = useArticles();
   const featuredId = useFeaturedId();
   const announcements = useAnnouncements();
@@ -59,8 +61,9 @@ export default function Home() {
     <div
       style={{
         display: 'flex',
-        gap: 20,
-        padding: '12px 24px 40px 80px',
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: isMobile ? 16 : 20,
+        padding: isMobile ? '12px 14px 40px' : '12px 24px 40px 80px',
         height: '100%',
         overflowY: 'auto',
       }}
@@ -74,9 +77,9 @@ export default function Home() {
 
         {/* Three Cards Row: Author + Website Info + Announcements */}
         <AnimateIn y={24} delay={0.05} duration={0.6}>
-          <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', flexDirection: isMobile ? 'column' : 'row', gap: 16, marginBottom: 20 }}>
             {/* Card 1: Author Introduction */}
-            <Link to="/about" style={{ flex: 1, textDecoration: 'none' }}>
+            <Link to="/about" style={{ flex: isMobile ? '1 1 100%' : isTablet ? '1 1 calc(50% - 8px)' : '1 1 0%', minWidth: 0, textDecoration: 'none' }}>
               <motion.div
                 whileHover={{ y: -3 }}
                 className="glass glass-strong"
@@ -130,7 +133,7 @@ export default function Home() {
             </Link>
 
             {/* Card 2: Website Info */}
-            <Link to="/site-info" style={{ flex: 1, textDecoration: 'none' }}>
+            <Link to="/site-info" style={{ flex: isMobile ? '1 1 100%' : isTablet ? '1 1 calc(50% - 8px)' : '1 1 0%', minWidth: 0, textDecoration: 'none' }}>
               <motion.div
                 whileHover={{ y: -3 }}
                 className="glass"
@@ -176,7 +179,7 @@ export default function Home() {
             </Link>
 
             {/* Card 3: Announcements */}
-            <Link to="/announcements" style={{ flex: 1, textDecoration: 'none' }}>
+            <Link to="/announcements" style={{ flex: isMobile ? '1 1 100%' : isTablet ? '1 1 calc(50% - 8px)' : '1 1 0%', minWidth: 0, textDecoration: 'none' }}>
               <motion.div
                 whileHover={{ y: -3 }}
                 className="glass"
@@ -437,11 +440,12 @@ export default function Home() {
       {/* ===== Right Sidebar ===== */}
       <aside
         style={{
-          width: 220,
+          width: isMobile ? '100%' : 220,
           flexShrink: 0,
           display: 'flex',
-          flexDirection: 'column',
-          gap: 16,
+          flexDirection: isMobile ? 'row' : 'column',
+          flexWrap: isMobile ? 'wrap' : 'nowrap',
+          gap: isMobile ? 12 : 16,
         }}
       >
         {/* Hi Button */}
@@ -496,6 +500,7 @@ export default function Home() {
                               display: 'flex',
                               alignItems: 'center',
                               gap: 6,
+                              minWidth: 0,
                               padding: '4px 6px',
                               fontSize: 11,
                               color: 'var(--text-muted)',
@@ -512,7 +517,7 @@ export default function Home() {
                             }}
                           >
                             <span style={{ width: 10, height: 10, borderRadius: 3, border: '1px solid var(--text-muted)', flexShrink: 0 }} />
-                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {a.date.slice(8)}{t('日', '')} {t(a.titleZh, a.titleEn)}
                             </span>
                           </Link>

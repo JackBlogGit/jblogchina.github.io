@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Feather, Code2, BookOpen, Camera, Coffee, MapPin, Mail, Heart } from 'lucide-react';
 import AnimateIn from '../components/AnimateIn';
 import { useApp } from '../context/AppContext';
+import { useDevice } from '../hooks/useDevice';
 import { asset } from '../utils/asset';
 
 const AVATAR = asset('/images/avatar.png');
@@ -9,11 +10,12 @@ const BANNER = asset('/images/about-banner.png');
 
 export default function About() {
   const { t } = useApp();
+  const { isMobile } = useDevice();
 
   return (
     <div
       style={{
-        padding: '12px 24px 40px 80px',
+        padding: isMobile ? '12px 14px 32px' : '12px 24px 40px 80px',
         height: '100%',
         overflowY: 'auto',
       }}

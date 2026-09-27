@@ -14,10 +14,12 @@ import AnimateIn from '../components/AnimateIn';
 import { useArticles } from '../data/articles';
 import type { Block } from '../data/articles';
 import { useApp } from '../context/AppContext';
+import { useDevice } from '../hooks/useDevice';
 
 export default function ArticleDetail() {
   const { slug } = useParams();
   const { t } = useApp();
+  const { isMobile } = useDevice();
   const navigate = useNavigate();
   const articles = useArticles();
   const [liked, setLiked] = useState(false);
@@ -43,7 +45,7 @@ export default function ArticleDetail() {
   const recs = related.length > 0 ? related : fallback;
 
   return (
-    <div style={{ padding: '12px 24px 40px 80px', height: '100%', overflowY: 'auto' }}>
+    <div style={{ padding: isMobile ? '12px 14px 32px' : '12px 24px 40px 80px', height: '100%', overflowY: 'auto' }}>
       {/* back */}
       <AnimateIn y={-10}>
         <button

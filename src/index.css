@@ -195,6 +195,62 @@ input {
 }
 
 /* ========================================================
+   RESPONSIVE — 移动端/平板基线
+   ======================================================== */
+@media (max-width: 767px) {
+  html,
+  body {
+    -webkit-text-size-adjust: 100%;
+  }
+  ::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
+  }
+  .glass {
+    border-radius: 14px;
+  }
+  /* iOS 上 backdrop-filter 大面积模糊很耗电，小屏降低饱和度 */
+  .glass {
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ========================================================
+   Responsive baseline — phone / tablet adaptation
+   ======================================================== */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (max-width: 767px) {
+  ::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  /* 触屏无悬停：去掉 hover 增强，避免点击后"卡住"的高亮 */
+  .glass:hover {
+    box-shadow: var(--glass-shadow);
+  }
+
+  .glass:hover .exh-overlay,
+  .glass:hover .exh-caption {
+    opacity: 0;
+  }
+}
+
+/* ========================================================
    HI-SHAKE — "嗨一下" text bounce effect
    ======================================================== */
 

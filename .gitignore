@@ -15,3 +15,4 @@ npm-debug.log*
 # 本地工作产物，不属于网站源码
 output/
 vibe_images/
+tools/

@@ -4,9 +4,11 @@ import { Download } from 'lucide-react';
 import AnimateIn from '../components/AnimateIn';
 import { useApp } from '../context/AppContext';
 import { useResources, useResourceGroups } from '../data/resources';
+import { useDevice } from '../hooks/useDevice';
 
 export default function ResourcesPage() {
   const { t, lang, toggleLang, toggleTheme, theme } = useApp();
+  const { isMobile } = useDevice();
   const items = useResources();
   const allGroups = useResourceGroups();
   const [activeGroup, setActiveGroup] = useState(allGroups[0].key);
@@ -18,7 +20,7 @@ export default function ResourcesPage() {
   const currentGroup = groups.find((g) => g.key === activeGroup) || groups[0];
 
   return (
-    <div style={{ padding: '20px 40px 40px 60px', height: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div style={{ padding: isMobile ? '16px 14px 32px' : '20px 40px 40px 60px', height: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* ===== Header Row ===== */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <AnimateIn>
@@ -47,11 +49,11 @@ export default function ResourcesPage() {
       </div>
 
       {/* ===== Main Layout: Left Sidebar + Content ===== */}
-      <div style={{ display: 'flex', gap: 20 }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 20 }}>
         {/* ===== Left Sidebar: Category Nav (pinned at 25% from top) ===== */}
-        <aside style={{ width: 140, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 4, position: 'sticky', top: '25%', alignSelf: 'flex-start' }}>
+        <aside style={{ width: isMobile ? '100%' : 140, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 4, position: isMobile ? 'static' : 'sticky', top: '25%', alignSelf: 'flex-start' }}>
           <AnimateIn x={-20} delay={0.1}>
-            <div className="glass" style={{ borderRadius: 14, padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div className="glass" style={{ borderRadius: 14, padding: '10px 8px', display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: 4, overflowX: isMobile ? 'auto' : undefined }}>
               {groups.map((group) => {
                 const isActive = activeGroup === group.key;
                 return (
@@ -68,6 +70,8 @@ export default function ResourcesPage() {
                       border: isActive ? '1px solid var(--accent)' : '1px solid transparent',
                       transition: 'all 0.2s',
                       textAlign: 'left',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) {

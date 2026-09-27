@@ -3,10 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight, Camera } from 'lucide-react';
 import AnimateIn from '../components/AnimateIn';
 import { useApp } from '../context/AppContext';
+import { useDevice } from '../hooks/useDevice';
 import { useArticles } from '../data/articles';
 
 export default function Gallery() {
   const { t } = useApp();
+  const { isMobile } = useDevice();
   const articles = useArticles();
   const [active, setActive] = useState<number | null>(null);
 
@@ -32,7 +34,7 @@ export default function Gallery() {
   const next = () => setActive((idx + 1) % ALL_IMAGES.length);
 
   return (
-    <div style={{ padding: '12px 24px 40px 80px', height: '100%', overflowY: 'auto' }}>
+    <div style={{ padding: isMobile ? '12px 14px 32px' : '12px 24px 40px 80px', height: '100%', overflowY: 'auto' }}>
       <AnimateIn>
         <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
           <Camera size={26} style={{ color: 'var(--accent)' }} />
