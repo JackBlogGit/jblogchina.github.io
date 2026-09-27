@@ -33,6 +33,16 @@ export default function GlassBackground() {
           loop
           muted
           playsInline
+          onLoadedMetadata={(e) => {
+            // Safari 某些版本会忽略初始 muted 属性，元数据就绪后强制静音
+            e.currentTarget.muted = true;
+          }}
+          onEnded={(e) => {
+            // 部分浏览器 loop 失效时兜底重播
+            const v = e.currentTarget;
+            v.currentTime = 0;
+            void v.play();
+          }}
           src={media.bgType === 'video' && media.bgUrl ? media.bgUrl : asset('/videos/beach.mp4')}
           style={{
             position: 'absolute',
