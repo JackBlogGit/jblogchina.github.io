@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PanInfo } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight, Frame, Maximize2 } from 'lucide-react';
@@ -308,8 +309,9 @@ export default function Exhibition() {
         )}
       </div>
 
-      {/* Lightbox */}
-      <AnimatePresence>
+      {/* Lightbox — portal 到 body，避开 PageTransition 的 transform 包含块 */}
+      {createPortal(
+        <AnimatePresence>
         {active && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -433,7 +435,9 @@ export default function Exhibition() {
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body,
+      )}
     </div>
   );
 }
