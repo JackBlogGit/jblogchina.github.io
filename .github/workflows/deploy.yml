@@ -19,6 +19,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: 验证提交签名链（fafa415 起的每个提交必须由签名密钥验证通过）
+        run: |
+          echo "JackBlogGit@users.noreply.github.com namespaces=\"git\" $(cat .github/deploy-signing.pub)" > allowed_signers
+          git config gpg.ssh.allowedSignersFile "$PWD/allowed_signers"
+          git config gpg.format ssh
+          fail=0
+          for c in $(git rev-list fafa415..HEAD); do
+            if ! git verify-commit "$c" 2>/dev/null; then
+              echo "::error::commit $c 未签名或签名无效"
+              fail=1
+            fi
+          done
+          git verify-commit HEAD || { echo "::error::HEAD 签名无效"; exit 1; }
+          [ "$fail" = "0" ] && echo "提交签名链验证通过" || exit 1
       - uses: actions/setup-node@v4
         with:
           node-version: 22
