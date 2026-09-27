@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Music, RotateCcw, User, ArrowUp } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { useDevice } from '../hooks/useDevice';
 import { useSiteMedia } from '../data/siteMedia';
@@ -10,18 +10,39 @@ import { asset } from '../utils/asset';
 export default function FloatingToolbar() {
   const { t } = useApp();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isMobile } = useDevice();
   const media = useSiteMedia();
   const musicSrc = media.musicUrl || asset('/music/memory-reboot.mp3');
   const [musicOn, setMusicOn] = useState(true);
   const [showTop, setShowTop] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const scrollerRef = useRef<HTMLElement | null>(null);
 
+  // 滚动发生在 .app-scroll 或各页自己的 overflowY 容器里，window 从不滚动；
+  // scroll 不冒泡，但能在 window 捕获阶段拦到
   useEffect(() => {
-    const onScroll = () => setShowTop(window.scrollY > 300);
-    window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
+    const onScroll = (e: Event) => {
+      const el = e.target;
+      if (!(el instanceof HTMLElement) || el.scrollHeight - el.clientHeight < 8) return;
+      scrollerRef.current = el;
+      setShowTop(el.scrollTop > 300);
+    };
+    window.addEventListener('scroll', onScroll, true);
+    return () => window.removeEventListener('scroll', onScroll, true);
   }, []);
+
+  // 换页后 scrollTop 归零不会触发 scroll，需手动收起
+  useEffect(() => {
+    scrollerRef.current = null;
+    setShowTop(false);
+  }, [location.pathname]);
+
+  const toTop = () => {
+    const el =
+      scrollerRef.current ?? document.querySelector<HTMLElement>('.app-scroll');
+    el?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const ensureAudio = () => {
     if (!audioRef.current) {
@@ -103,9 +124,10 @@ export default function FloatingToolbar() {
       transition={{ duration: 0.7, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
       style={{
         position: 'fixed',
-        left: 8,
+        /* fixed 会脱离外壳的安全区 padding，需自己偏移 */
+        left: 'calc(8px + var(--safe-left))',
         top: isMobile ? 'auto' : '50%',
-        bottom: isMobile ? 10 : 'auto',
+        bottom: isMobile ? 'calc(10px + var(--safe-bottom))' : 'auto',
         transform: isMobile ? 'none' : 'translateY(-50%)',
         zIndex: 25,
         display: 'flex',
@@ -124,8 +146,8 @@ export default function FloatingToolbar() {
           onClick={it.onClick}
           className="glass"
           style={{
-            width: isMobile ? 36 : 44,
-            height: isMobile ? 36 : 44,
+            width: 44,
+            height: 44,
             borderRadius: isMobile ? 11 : 14,
             display: 'flex',
             alignItems: 'center',
@@ -156,11 +178,11 @@ export default function FloatingToolbar() {
             exit={{ opacity: 0, scale: 0.6 }}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            onClick={toTop}
             className="glass"
             style={{
-              width: isMobile ? 36 : 44,
-              height: isMobile ? 36 : 44,
+              width: 44,
+              height: 44,
               borderRadius: isMobile ? 11 : 14,
               display: 'flex',
               alignItems: 'center',

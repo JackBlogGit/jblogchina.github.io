@@ -10,11 +10,13 @@ import { useDevice } from '../hooks/useDevice';
 
 export default function Journal() {
   const { t, lang } = useApp();
-  const { isMobile } = useDevice();
+  const { isMobile, isTablet } = useDevice();
   const allArticles = useArticles();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [query, setQuery] = useState('');
+  /* 高亮改由 state 驱动：触屏不触发 mouseenter，直接改 DOM 的 hover 在触屏上是死的 */
+  const [pressKey, setPressKey] = useState<string | null>(null);
 
   const journalArticles = allArticles.filter((a) => a.catKey === 'journal');
 
@@ -47,49 +49,53 @@ export default function Journal() {
 
   const { active: hiActive, toggle: toggleHi } = useHiEffect();
 
+  /* 「嗨一下」按钮：桌面/平板留在固定右栏，手机挪进文档流（固定栏宽 110px 会压住正文） */
+  const hiButton = (
+    <motion.button
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: 0.4, duration: 0.4 }}
+      whileHover={{ x: -3, scale: 1.05 }}
+      whileTap={{ scale: 0.92 }}
+      onClick={toggleHi}
+      className="glass"
+      style={{
+        padding: isMobile ? '12px' : '8px 12px',
+        minHeight: isMobile ? 44 : undefined,
+        borderRadius: 10,
+        fontSize: isMobile ? 14 : 12,
+        fontWeight: 700,
+        color: hiActive ? 'var(--accent)' : 'var(--text-secondary)',
+        width: '100%',
+        transition: 'color 0.25s',
+      }}
+    >
+      {t('嗨一下~', 'Hi shake~')}
+    </motion.button>
+  );
+
   return (
     <>
       {/* ===== Fixed Right Panel: Hi + TOC + Scroll Up (pinned at 30% from top) ===== */}
+      {!isMobile && (
       <motion.div
         initial={{ x: 40, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.7, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
         style={{
           position: 'fixed',
-          right: isMobile ? 10 : 16,
-          top: isMobile ? 'auto' : '30%',
-          bottom: isMobile ? 90 : undefined,
+          right: 16,
+          top: '30%',
           zIndex: 25,
           display: 'flex',
           flexDirection: 'column',
           gap: 10,
-          width: isMobile ? 110 : 150,
+          width: 150,
         }}
       >
-        {/* Hi shake button */}
-        <motion.button
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.4, duration: 0.4 }}
-          whileHover={{ x: -3, scale: 1.05 }}
-          whileTap={{ scale: 0.92 }}
-          onClick={toggleHi}
-          className="glass"
-          style={{
-            padding: '8px 12px',
-            borderRadius: 10,
-            fontSize: 12,
-            fontWeight: 700,
-            color: hiActive ? 'var(--accent)' : 'var(--text-secondary)',
-            width: '100%',
-            transition: 'color 0.25s',
-          }}
-        >
-          {t('嗨一下~', 'Hi shake~')}
-        </motion.button>
+        {hiButton}
 
-        {/* TOC Panel — hidden on phone */}
-        {!isMobile && (
+        {/* TOC Panel */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -113,6 +119,9 @@ export default function Journal() {
               <button
                 key={entry.id}
                 onClick={() => scrollToId(entry.id)}
+                onPointerEnter={() => setPressKey(entry.id)}
+                onPointerLeave={() => setPressKey(null)}
+                onPointerDown={() => setPressKey(entry.id)}
                 style={{
                   display: 'block',
                   width: '100%',
@@ -121,21 +130,13 @@ export default function Journal() {
                   borderRadius: 6,
                   fontSize: 11,
                   fontWeight: 500,
-                  color: 'var(--text-secondary)',
-                  background: 'transparent',
+                  color: pressKey === entry.id ? 'var(--accent)' : 'var(--text-secondary)',
+                  background: pressKey === entry.id ? 'var(--accent-soft)' : 'transparent',
                   transition: 'all 0.2s',
                   lineHeight: 1.3,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--accent-soft)';
-                  e.currentTarget.style.color = 'var(--accent)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = 'var(--text-secondary)';
                 }}
               >
                 {entry.text}
@@ -148,7 +149,6 @@ export default function Journal() {
             )}
           </div>
         </motion.div>
-        )}
 
         {/* Scroll to top */}
         <motion.button
@@ -160,8 +160,8 @@ export default function Journal() {
           onClick={scrollToTop}
           className="glass"
           style={{
-            width: 36,
-            height: 36,
+            width: isTablet ? 44 : 36,
+            height: isTablet ? 44 : 36,
             borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
@@ -170,14 +170,15 @@ export default function Journal() {
             alignSelf: 'center',
           }}
         >
-          <ArrowUp size={16} />
+          <ArrowUp size={isTablet ? 18 : 16} />
         </motion.button>
       </motion.div>
+      )}
 
       <div
         ref={scrollRef}
         style={{
-          padding: isMobile ? '12px 14px 32px' : '20px 200px 40px 60px',
+          padding: isMobile ? '12px 14px 92px' : '20px 200px 40px 60px',
           height: '100%',
           overflowY: 'auto',
           display: 'flex',
@@ -187,8 +188,8 @@ export default function Journal() {
       >
       {/* ===== Title ===== */}
         <AnimateIn>
-          <h1 style={{ fontSize: 28, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <BookOpen size={24} style={{ color: 'var(--accent)' }} />
+          <h1 style={{ fontSize: isMobile ? 22 : 28, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <BookOpen size={isMobile ? 20 : 24} style={{ color: 'var(--accent)' }} />
             {t('作者志', 'Journal')}
           </h1>
         </AnimateIn>
@@ -205,28 +206,27 @@ export default function Journal() {
               style={{
                 flex: 1,
                 background: 'transparent',
-                fontSize: 14,
+                /* 手机上内联 14px 会盖掉 index.css 的 16px 防 iOS 聚焦放大 */
+                fontSize: isMobile ? 16 : 14,
                 color: 'var(--text-primary)',
                 padding: '6px 4px',
+                minWidth: 0,
               }}
             />
             <button
+              onPointerEnter={() => setPressKey('search')}
+              onPointerLeave={() => setPressKey(null)}
+              onPointerDown={() => setPressKey('search')}
               style={{
-                padding: '6px 20px',
+                padding: isMobile ? '0 20px' : '6px 20px',
+                minHeight: isMobile ? 44 : undefined,
                 borderRadius: 10,
-                background: 'var(--accent-soft)',
-                color: 'var(--accent)',
+                background: pressKey === 'search' ? 'var(--accent)' : 'var(--accent-soft)',
+                color: pressKey === 'search' ? '#fff' : 'var(--accent)',
                 fontWeight: 700,
                 fontSize: 13,
                 transition: 'all 0.2s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--accent)';
-                e.currentTarget.style.color = '#fff';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'var(--accent-soft)';
-                e.currentTarget.style.color = 'var(--accent)';
+                flexShrink: 0,
               }}
             >
               {t('搜索', 'Search')}
@@ -234,37 +234,37 @@ export default function Journal() {
           </div>
         </AnimateIn>
 
+        {/* ===== Hi button — 手机挪进文档流，固定右栏会压住正文 ===== */}
+        {isMobile && (
+          <AnimateIn delay={0.16} y={12}>
+            <div style={{ display: 'flex', gap: 10 }}>{hiButton}</div>
+          </AnimateIn>
+        )}
+
         {/* ===== Article Cards ===== */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {filtered.map((article, i) => (
             <AnimateIn key={article.id} delay={0.05 * i} y={12}>
-              <Link to={`/article/${article.slug}`} style={{ textDecoration: 'none' }}>
-                <div
+              <Link to={`/article/${article.slug}`} style={{ textDecoration: 'none', display: 'block' }}>
+                <motion.div
                   id={`article-${article.id}`}
+                  whileHover={{ y: -4 }}
+                  whileTap={{ scale: 0.995 }}
                   className="glass"
                   style={{
-                    padding: '24px 28px',
+                    padding: isMobile ? '16px 14px' : '24px 28px',
                     borderRadius: 16,
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 12,
                     cursor: 'pointer',
-                    transition: 'all 0.25s',
-                    minHeight: 200,
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = 'var(--glass-shadow-strong)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'var(--glass-shadow)';
+                    minHeight: isMobile ? 160 : 200,
                   }}
                 >
                   {/* Title */}
                   <h2
                     style={{
-                      fontSize: 22,
+                      fontSize: isMobile ? 18 : 22,
                       fontWeight: 800,
                       color: 'var(--text-primary)',
                       lineHeight: 1.3,
@@ -277,7 +277,7 @@ export default function Journal() {
                   </h2>
 
                   {/* Source + Date Row */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: isMobile ? 6 : 8 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600 }}>
                         {t('来源：', 'Source: ')}
@@ -310,7 +310,7 @@ export default function Journal() {
                   <div style={{ flex: 1, padding: '12px 0', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
                     {t(article.excerptZh, article.excerptEn)}
                   </div>
-                </div>
+                </motion.div>
               </Link>
             </AnimateIn>
           ))}

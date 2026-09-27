@@ -49,6 +49,10 @@ function App() {
             width: '100%',
             display: 'flex',
             flexDirection: 'column',
+            paddingTop: 'var(--safe-top)',
+            paddingRight: 'var(--safe-right)',
+            paddingBottom: 'var(--safe-bottom)',
+            paddingLeft: 'var(--safe-left)',
           }}
         >
           <Navbar />
@@ -56,7 +60,7 @@ function App() {
 
           <main style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
             <PageTransition>
-              <div style={{ height: '100%', overflow: 'auto' }}>
+              <div className="app-scroll" style={{ height: '100%', overflow: 'auto' }}>
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/journal" element={<Journal />} />

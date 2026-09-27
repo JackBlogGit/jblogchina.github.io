@@ -45,14 +45,17 @@ export default function ArticleDetail() {
   const recs = related.length > 0 ? related : fallback;
 
   return (
-    <div style={{ padding: isMobile ? '12px 14px 32px' : '12px 24px 40px 80px', height: '100%', overflowY: 'auto' }}>
+    <div style={{ padding: isMobile ? '12px 14px 92px' : '12px 24px 40px 80px', height: '100%', overflowY: 'auto' }}>
       {/* back */}
       <AnimateIn y={-10}>
-        <button
+        <motion.button
+          whileHover={{ x: -3 }}
+          whileTap={{ scale: 0.96 }}
           onClick={() => navigate(-1)}
           className="glass"
           style={{
-            padding: '8px 14px',
+            padding: isMobile ? '0 16px' : '8px 14px',
+            minHeight: isMobile ? 44 : undefined,
             borderRadius: 10,
             display: 'inline-flex',
             alignItems: 'center',
@@ -64,13 +67,13 @@ export default function ArticleDetail() {
         >
           <ArrowLeft size={14} />
           {t('返回', 'Back')}
-        </button>
+        </motion.button>
       </AnimateIn>
 
       {/* header */}
       <AnimateIn y={20} duration={0.7}>
         <div style={{ maxWidth: 720, margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
             <span
               style={{
                 padding: '3px 12px',
@@ -95,10 +98,10 @@ export default function ArticleDetail() {
 
           <h1
             style={{
-              fontSize: 34,
+              fontSize: isMobile ? 23 : 34,
               fontWeight: 800,
               lineHeight: 1.2,
-              letterSpacing: '-0.02em',
+              letterSpacing: isMobile ? '-0.01em' : '-0.02em',
               marginBottom: 16,
               color: 'var(--text-primary)',
             }}
@@ -161,10 +164,11 @@ export default function ArticleDetail() {
           style={{
             maxWidth: 720,
             margin: '32px auto 0',
-            padding: '16px 20px',
+            padding: isMobile ? '14px 16px' : '16px 20px',
             borderRadius: 16,
             display: 'flex',
-            alignItems: 'center',
+            flexDirection: isMobile ? 'column' : 'row',
+            alignItems: isMobile ? 'stretch' : 'center',
             justifyContent: 'space-between',
             gap: 12,
           }}
@@ -189,14 +193,14 @@ export default function ArticleDetail() {
               </span>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: 8, flexShrink: 0, justifyContent: isMobile ? 'center' : undefined }}>
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => setLiked((v) => !v)}
               className="glass"
               style={{
-                width: 38,
-                height: 38,
+                width: isMobile ? 44 : 38,
+                height: isMobile ? 44 : 38,
                 borderRadius: 10,
                 display: 'flex',
                 alignItems: 'center',
@@ -211,8 +215,8 @@ export default function ArticleDetail() {
               onClick={() => setSaved((v) => !v)}
               className="glass"
               style={{
-                width: 38,
-                height: 38,
+                width: isMobile ? 44 : 38,
+                height: isMobile ? 44 : 38,
                 borderRadius: 10,
                 display: 'flex',
                 alignItems: 'center',
@@ -226,8 +230,8 @@ export default function ArticleDetail() {
               whileTap={{ scale: 0.9 }}
               className="glass"
               style={{
-                width: 38,
-                height: 38,
+                width: isMobile ? 44 : 38,
+                height: isMobile ? 44 : 38,
                 borderRadius: 10,
                 display: 'flex',
                 alignItems: 'center',
@@ -247,18 +251,19 @@ export default function ArticleDetail() {
           <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>
             {t('继续阅读', 'Keep reading')}
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 12 : 16 }}>
             {recs.map((r, i) => (
               <AnimateIn key={r.id} delay={0.08 * i} y={16}>
-                <Link to={`/article/${r.slug}`}>
+                <Link to={`/article/${r.slug}`} style={{ display: 'block' }}>
                   <motion.div
                     whileHover={{ y: -3 }}
+                    whileTap={{ scale: 0.99 }}
                     className="glass"
                     style={{ borderRadius: 14, overflow: 'hidden', cursor: 'pointer' }}
                   >
                     <div
                       style={{
-                        height: 100,
+                        height: isMobile ? 120 : 100,
                         background: `url(${r.cover}) center/cover`,
                       }}
                     />

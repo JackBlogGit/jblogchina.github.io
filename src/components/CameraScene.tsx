@@ -3,8 +3,9 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, Float } from '@react-three/drei';
 import * as THREE from 'three';
 import { asset } from '../utils/asset';
+import { useDevice } from '../hooks/useDevice';
 
-function CameraModel({ url, mouse }: { url: string; mouse: React.RefObject<{ x: number; y: number }> }) {
+function CameraModel({ url, mouse, still = false }: { url: string; mouse: React.RefObject<{ x: number; y: number }>; still?: boolean }) {
   const { scene } = useGLTF(url);
   const group = useRef<THREE.Group>(null!);
   const target = useRef({ x: 0, y: 0 });
@@ -34,10 +35,13 @@ function CameraModel({ url, mouse }: { url: string; mouse: React.RefObject<{ x: 
 
   useFrame((_, delta) => {
     if (!group.current) return;
-    drift.current += delta * 0.25;
+    drift.current += delta * (still ? 0.18 : 0.25);
     if (!mouse.current) return;
-    target.current.x = mouse.current.y * 0.3 + Math.sin(drift.current * 0.6) * 0.05;
-    target.current.y = mouse.current.x * 0.5 + drift.current * 0.12;
+    // 手机上没有指针输入,忽略残留值,只保留缓慢自转 + 浮动
+    const px = still ? 0 : mouse.current.y * 0.3;
+    const py = still ? 0 : mouse.current.x * 0.5;
+    target.current.x = px + Math.sin(drift.current * 0.6) * 0.05;
+    target.current.y = py + drift.current * 0.12;
     group.current.rotation.x += (target.current.x - group.current.rotation.x) * 0.05;
     group.current.rotation.y += (target.current.y - group.current.rotation.y) * 0.05;
   });
@@ -80,17 +84,26 @@ interface CameraSceneProps {
 }
 
 export default function CameraScene({ modelUrl = asset('/models/canon-camera.glb'), opacity = 0.5, zIndex = 0 }: CameraSceneProps) {
+  const { device } = useDevice();
+  const phone = device === 'phone';
   const mouse = useRef({ x: 0, y: 0 });
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
+    // 手机上不挂指针监听:省事件开销,靠 drift 保持缓慢自转
+    if (phone) {
+      mouse.current.x = 0;
+      mouse.current.y = 0;
+      return;
+    }
+    // pointermove 同时覆盖鼠标和平板触摸(触摸期间跟手),mousemove 在触屏上永远不触发
+    const handler = (e: PointerEvent) => {
       mouse.current.x = (e.clientX / window.innerWidth) * 2 - 1;
       mouse.current.y = -(e.clientY / window.innerHeight) * 2 + 1;
     };
-    window.addEventListener('mousemove', handler);
-    return () => window.removeEventListener('mousemove', handler);
-  }, []);
+    window.addEventListener('pointermove', handler, { passive: true });
+    return () => window.removeEventListener('pointermove', handler);
+  }, [phone]);
 
   return (
     <div
@@ -108,8 +121,9 @@ export default function CameraScene({ modelUrl = asset('/models/canon-camera.glb
         camera={{ position: [0, 0, 5], fov: 45 }}
         onCreated={() => setReady(true)}
         style={{ pointerEvents: 'none' }}
-        gl={{ antialias: true, alpha: true }}
-        dpr={[1, 1.5]}
+        /* 手机:关抗锯齿 + dpr 锁 1,WebGL 片元量降一大截;桌面保持原样 */
+        gl={{ antialias: !phone, alpha: true }}
+        dpr={phone ? 1 : [1, 1.5]}
       >
         <ambientLight intensity={0.5} />
         <directionalLight position={[5, 5, 5]} intensity={1.2} />
@@ -117,10 +131,10 @@ export default function CameraScene({ modelUrl = asset('/models/canon-camera.glb
         <pointLight position={[0, -2, 3]} intensity={0.6} color="#ffaa44" />
 
         <Suspense fallback={<LoadingFallback />}>
-          <CameraModel url={modelUrl} mouse={mouse} />
+          <CameraModel url={modelUrl} mouse={mouse} still={phone} />
         </Suspense>
 
-        <CameraRig mouse={mouse} />
+        {!phone && <CameraRig mouse={mouse} />}
       </Canvas>
     </div>
   );

@@ -3,6 +3,7 @@ import { Clock, Tag, ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Article } from '../data/articles';
 import { useApp } from '../context/AppContext';
+import { useDevice } from '../hooks/useDevice';
 
 interface Props {
   article: Article;
@@ -12,6 +13,7 @@ interface Props {
 
 export default function ArticleCard({ article, variant = 'card', index = 0 }: Props) {
   const { t } = useApp();
+  const { isMobile } = useDevice();
 
   if (variant === 'row') {
     return (
@@ -22,15 +24,16 @@ export default function ArticleCard({ article, variant = 'card', index = 0 }: Pr
         exit={{ opacity: 0, y: -10 }}
         transition={{ delay: 0.04 * index, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       >
-        <Link to={`/article/${article.slug}`}>
+        <Link to={`/article/${article.slug}`} style={{ display: 'block' }}>
           <motion.div
             whileHover={{ x: 3 }}
+            whileTap={{ scale: 0.99, x: 0 }}
             className="glass"
             style={{
               padding: 14,
               borderRadius: 16,
               display: 'flex',
-              gap: 14,
+              gap: isMobile ? 10 : 14,
               alignItems: 'center',
               cursor: 'pointer',
             }}
@@ -38,8 +41,8 @@ export default function ArticleCard({ article, variant = 'card', index = 0 }: Pr
             {/* cover */}
             <div
               style={{
-                width: 72,
-                height: 54,
+                width: isMobile ? 64 : 72,
+                height: isMobile ? 48 : 54,
                 borderRadius: 10,
                 flexShrink: 0,
                 overflow: 'hidden',
@@ -47,7 +50,7 @@ export default function ArticleCard({ article, variant = 'card', index = 0 }: Pr
               }}
             />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, fontSize: 11, color: 'var(--text-muted)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, fontSize: 11, color: 'var(--text-muted)', flexWrap: isMobile ? 'wrap' : 'nowrap', minWidth: 0 }}>
                 <span style={{ fontWeight: 700, color: 'var(--accent)' }}>{t(article.catZh, article.catEn)}</span>
                 <span>·</span>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
@@ -79,6 +82,7 @@ export default function ArticleCard({ article, variant = 'card', index = 0 }: Pr
       <Link to={`/article/${article.slug}`} style={{ display: 'block' }}>
         <motion.article
           whileHover={{ y: -6 }}
+          whileTap={{ scale: 0.99 }}
           className="glass"
           style={{
             borderRadius: 18,
@@ -92,7 +96,7 @@ export default function ArticleCard({ article, variant = 'card', index = 0 }: Pr
           {/* cover */}
           <div
             style={{
-              height: 180,
+              height: isMobile ? 148 : 180,
               position: 'relative',
               overflow: 'hidden',
             }}
@@ -133,7 +137,7 @@ export default function ArticleCard({ article, variant = 'card', index = 0 }: Pr
           </div>
 
           {/* body */}
-          <div style={{ padding: '18px 18px 16px', display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
+          <div style={{ padding: isMobile ? '14px 14px 12px' : '18px 18px 16px', display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: 'var(--text-muted)' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                 <Clock size={11} />
@@ -143,7 +147,7 @@ export default function ArticleCard({ article, variant = 'card', index = 0 }: Pr
               <span>{article.date}</span>
             </div>
 
-            <h3 style={{ fontSize: 17, fontWeight: 700, lineHeight: 1.4, color: 'var(--text-primary)' }}>
+            <h3 style={{ fontSize: isMobile ? 16 : 17, fontWeight: 700, lineHeight: 1.4, color: 'var(--text-primary)' }}>
               {t(article.titleZh, article.titleEn)}
             </h3>
 
@@ -151,8 +155,8 @@ export default function ArticleCard({ article, variant = 'card', index = 0 }: Pr
               {t(article.excerptZh, article.excerptEn)}
             </p>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', minWidth: 0 }}>
                 {article.tags.map((tag) => (
                   <span
                     key={tag}

@@ -40,6 +40,8 @@ export default function Home() {
   const featuredId = useFeaturedId();
   const announcements = useAnnouncements();
   const [expandedMonths, setExpandedMonths] = useState<Record<string, boolean>>({});
+  /* 归档行的高亮改由 state 驱动：触屏不会触发 mouseenter，DOM 直改样式的 hover 在手机上等于没有 */
+  const [pressKey, setPressKey] = useState<string | null>(null);
 
   const featured = articles.find((a) => a.id === featuredId) ?? articles[0];
   const techArticle = articles.find((a) => a.catKey === 'stack') ?? articles[1];
@@ -63,7 +65,8 @@ export default function Home() {
         display: 'flex',
         flexDirection: isMobile ? 'column' : 'row',
         gap: isMobile ? 16 : 20,
-        padding: isMobile ? '12px 14px 40px' : '12px 24px 40px 80px',
+        /* 手机：底部留出左下角工具条（约 64px）的空间，否则最后一行永远被压住 */
+        padding: isMobile ? '12px 14px 92px' : '12px 24px 40px 80px',
         height: '100%',
         overflowY: 'auto',
       }}
@@ -397,23 +400,27 @@ export default function Home() {
           <Link to={`/article/${featured.slug}`} style={{ display: 'block' }}>
             <motion.div
               whileHover={{ y: -4 }}
+              whileTap={{ scale: 0.995 }}
               className="glass"
               style={{
                 borderRadius: 18,
                 overflow: 'hidden',
                 display: 'flex',
+                /* 手机上 240px 封面会把文字列挤到 44px，改为上图下文 */
+                flexDirection: isMobile ? 'column' : 'row',
                 minHeight: 160,
                 cursor: 'pointer',
               }}
             >
               <div
                 style={{
-                  flex: '0 0 240px',
+                  flex: isMobile ? '0 0 auto' : '0 0 240px',
+                  height: isMobile ? 168 : undefined,
                   background: `url(${featured.cover}) center/cover`,
                 }}
               />
-              <div style={{ flex: 1, padding: '20px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <div style={{ flex: 1, minWidth: 0, padding: isMobile ? '16px 18px' : '20px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
                   <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, background: 'var(--accent-soft)', color: 'var(--accent)', fontWeight: 700 }}>
                     {t(featured.catZh, featured.catEn)}
                   </span>
@@ -421,7 +428,7 @@ export default function Home() {
                     {featured.date} · {featured.readMin} {t('分钟', 'min')}
                   </span>
                 </div>
-                <h3 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8, lineHeight: 1.3 }}>
+                <h3 style={{ fontSize: isMobile ? 17 : 20, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8, lineHeight: 1.3 }}>
                   {t(featured.titleZh, featured.titleEn)}
                 </h3>
                 <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
@@ -442,9 +449,9 @@ export default function Home() {
         style={{
           width: isMobile ? '100%' : 220,
           flexShrink: 0,
+          /* 手机上必须是纵向单列：row+wrap 会让 Hi 按钮和归档条目并排且行被裁切 */
           display: 'flex',
-          flexDirection: isMobile ? 'row' : 'column',
-          flexWrap: isMobile ? 'wrap' : 'nowrap',
+          flexDirection: 'column',
           gap: isMobile ? 12 : 16,
         }}
       >
@@ -467,20 +474,23 @@ export default function Home() {
                   <div key={group.ym}>
                     <button
                       onClick={() => toggleMonth(group.ym)}
+                      onPointerEnter={() => setPressKey(`m-${group.ym}`)}
+                      onPointerLeave={() => setPressKey(null)}
+                      onPointerDown={() => setPressKey(`m-${group.ym}`)}
                       style={{
                         width: '100%',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '6px 4px',
+                        padding: isMobile ? '0 8px' : '6px 4px',
+                        minHeight: isMobile ? 44 : undefined,
                         fontSize: 12,
                         color: 'var(--text-secondary)',
                         fontWeight: 600,
                         borderRadius: 6,
+                        background: pressKey === `m-${group.ym}` ? 'var(--accent-soft)' : 'transparent',
                         transition: 'background 0.2s',
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--accent-soft)')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                     >
                       <span>
                         {group.year}{t('年', '-')}{group.month}{t('月', '')}
@@ -496,24 +506,21 @@ export default function Home() {
                           <Link
                             key={a.id}
                             to={`/article/${a.slug}`}
+                            onPointerEnter={() => setPressKey(`a-${a.id}`)}
+                            onPointerLeave={() => setPressKey(null)}
+                            onPointerDown={() => setPressKey(`a-${a.id}`)}
                             style={{
                               display: 'flex',
                               alignItems: 'center',
                               gap: 6,
                               minWidth: 0,
-                              padding: '4px 6px',
+                              padding: isMobile ? '0 6px' : '4px 6px',
+                              minHeight: isMobile ? 44 : undefined,
                               fontSize: 11,
-                              color: 'var(--text-muted)',
+                              color: pressKey === `a-${a.id}` ? 'var(--accent)' : 'var(--text-muted)',
+                              background: pressKey === `a-${a.id}` ? 'var(--accent-soft)' : 'transparent',
                               borderRadius: 4,
                               transition: 'background 0.2s, color 0.2s',
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background = 'var(--accent-soft)';
-                              e.currentTarget.style.color = 'var(--accent)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = 'transparent';
-                              e.currentTarget.style.color = 'var(--text-muted)';
                             }}
                           >
                             <span style={{ width: 10, height: 10, borderRadius: 3, border: '1px solid var(--text-muted)', flexShrink: 0 }} />

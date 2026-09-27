@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { PanInfo } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight, Frame, Maximize2 } from 'lucide-react';
 import AnimateIn from '../components/AnimateIn';
 import CameraScene from '../components/CameraScene';
@@ -9,17 +10,42 @@ import type { Art } from '../data/gallery';
 
 const UNCATEGORIZED = '__none__';
 
-/** 简易响应式断点 */
+/* 滑动切换阈值:拖够 72px 才翻页,或者甩动速度够快(且至少拖动 16px) */
+const SWIPE_MIN_DIST = 72;
+const SWIPE_MIN_VELOCITY = 550;
+
+/** lightbox 左右滑动 -> 上/下一张 */
+function swipeHandler(prev: () => void, next: () => void) {
+  return (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const { offset, velocity } = info;
+    // 纵向意图(滚页面)不当成翻页
+    if (Math.abs(offset.x) <= Math.abs(offset.y)) return;
+    const far = Math.abs(offset.x) >= SWIPE_MIN_DIST;
+    const flick = Math.abs(velocity.x) >= SWIPE_MIN_VELOCITY && Math.abs(offset.x) >= 16;
+    if (!far && !flick) return;
+    if (offset.x < 0) next();
+    else prev();
+  };
+}
+
+/** 简易响应式断点:宽度量化到 16px,避免每个像素都 re-render */
 function useCols() {
   const [w, setW] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1400));
   useEffect(() => {
-    const h = () => setW(window.innerWidth);
-    window.addEventListener('resize', h);
+    const h = () => {
+      const nextW = window.innerWidth;
+      setW((cur) => (Math.floor(cur / 16) === Math.floor(nextW / 16) ? cur : nextW));
+    };
+    h();
+    window.addEventListener('resize', h, { passive: true });
     return () => window.removeEventListener('resize', h);
   }, []);
-  if (w < 900) return { cols: 2, heroStacked: true };
-  if (w < 1280) return { cols: 3, heroStacked: false };
-  return { cols: 4, heroStacked: false };
+  // phone / tablet 的判定跟 useDevice + FloatingToolbar 的 ≤767 / ≤1199 对齐
+  const phone = w < 768;
+  if (w < 640) return { cols: 1, heroStacked: true, phone, tablet: !phone && w < 1200 };
+  if (w < 900) return { cols: 2, heroStacked: true, phone, tablet: !phone && w < 1200 };
+  if (w < 1280) return { cols: 3, heroStacked: false, phone, tablet: !phone && w < 1200 };
+  return { cols: 4, heroStacked: false, phone, tablet: !phone && w < 1200 };
 }
 
 function ArtCaption({ art, idx }: { art: Art; idx: number }) {
@@ -47,7 +73,7 @@ export default function Exhibition() {
   const CATS = useGalleryCategories();
   const [activeCat, setActiveCat] = useState<string>('all');
   const [active, setActive] = useState<Art | null>(null);
-  const { cols, heroStacked } = useCols();
+  const { cols, heroStacked, phone, tablet } = useCols();
 
   const hasUncategorized = ARTS.some((a) => !a.category);
 
@@ -63,6 +89,20 @@ export default function Exhibition() {
   const idx = active ? visible.findIndex((a) => a.id === active.id) : -1;
   const prev = () => visible.length && setActive(visible[(idx - 1 + visible.length) % visible.length]);
   const next = () => visible.length && setActive(visible[(idx + 1) % visible.length]);
+  const canSwipe = visible.length > 1;
+
+  // 键盘导航:只在 lightbox 打开时挂监听,Escape / ← →
+  useEffect(() => {
+    if (!active) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setActive(null);
+      else if (e.key === 'ArrowLeft') prev();
+      else if (e.key === 'ArrowRight') next();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, idx, visible]);
 
   // 杂志式跨度模式：每 5 个里第 1 个跨 2 列（feature），其余跨 1 列
   const spanFor = (i: number) => (cols >= 3 && i % 5 === 0 ? 2 : 1);
@@ -90,7 +130,15 @@ export default function Exhibition() {
       />
       <CameraScene opacity={0.35} zIndex={2} />
 
-      <div style={{ position: 'relative', zIndex: 1, padding: '12px 24px 40px 80px', height: '100%', overflowY: 'auto' }}>
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          padding: phone ? '12px 14px 32px' : '12px 24px 40px 80px',
+          height: '100%',
+          overflowY: 'auto',
+        }}
+      >
         <AnimateIn>
           <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
             <Frame size={26} style={{ color: 'var(--accent)' }} />
@@ -108,23 +156,34 @@ export default function Exhibition() {
 
         {/* 分类标签栏 */}
         <AnimateIn delay={0.12} y={16} duration={0.5}>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 28 }}>
+          <div
+            className={phone ? 'scroll-x scroll-x--bare' : undefined}
+            style={{
+              display: 'flex',
+              gap: phone ? 6 : 8,
+              flexWrap: phone ? 'nowrap' : 'wrap',
+              marginBottom: phone ? 18 : 28,
+              paddingBottom: phone ? 6 : 0,
+            }}
+          >
             {tabs.map((tab) => {
               const on = activeCat === tab.key;
               return (
                 <button
                   key={tab.key}
                   onClick={() => setActiveCat(tab.key)}
-                  className="glass"
+                  className={`glass${phone ? ' tap' : ''}`}
                   style={{
                     position: 'relative',
-                    padding: '7px 16px',
+                    padding: phone ? '10px 14px' : '7px 16px',
                     borderRadius: 999,
                     fontSize: 13,
                     fontWeight: on ? 700 : 500,
                     color: on ? '#fff' : 'var(--text-secondary)',
                     cursor: 'pointer',
                     overflow: 'hidden',
+                    flexShrink: 0,
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {on && (
@@ -163,10 +222,10 @@ export default function Exhibition() {
                 borderRadius: 20,
                 overflow: 'hidden',
                 cursor: 'pointer',
-                marginBottom: 28,
+                marginBottom: phone ? 18 : 28,
               }}
             >
-              <div style={{ flex: heroStacked ? 'none' : '1.7 1 0%', minHeight: heroStacked ? 260 : 380, position: 'relative', overflow: 'hidden' }}>
+              <div style={{ flex: heroStacked ? 'none' : '1.7 1 0%', minHeight: heroStacked ? (phone ? 200 : 260) : 380, position: 'relative', overflow: 'hidden' }}>
                 <motion.img
                   src={hero.url}
                   alt={t(hero.titleZh, hero.titleEn)}
@@ -178,11 +237,11 @@ export default function Exhibition() {
                   {catLabel(hero.category || UNCATEGORIZED)}
                 </div>
               </div>
-              <div style={{ flex: heroStacked ? 'none' : '1 1 0%', padding: '28px 30px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 12, minWidth: 0 }}>
+              <div style={{ flex: heroStacked ? 'none' : '1 1 0%', padding: phone ? '18px 16px 20px' : '28px 30px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: phone ? 9 : 12, minWidth: 0 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', color: 'var(--accent)' }}>
                   {t('本期聚焦', 'Featured')}
                 </div>
-                <h2 style={{ fontSize: 26, fontWeight: 800, lineHeight: 1.25 }}>{t(hero.titleZh, hero.titleEn)}</h2>
+                <h2 style={{ fontSize: phone ? 20 : 26, fontWeight: 800, lineHeight: 1.25 }}>{t(hero.titleZh, hero.titleEn)}</h2>
                 <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                   {t(hero.artistZh, hero.artistEn)} · {hero.year} · {t(hero.mediumZh, hero.mediumEn)}
                 </div>
@@ -202,13 +261,13 @@ export default function Exhibition() {
             style={{
               display: 'grid',
               gridTemplateColumns: `repeat(${cols}, 1fr)`,
-              gap: 18,
+              gap: phone ? 12 : 18,
               gridAutoFlow: 'dense',
             }}
           >
             {rest.map((a, i) => {
               const span = spanFor(i);
-              const aspect = span === 2 ? '16 / 10' : a.w >= 1 ? '4 / 5' : '3 / 2';
+              const aspect = span === 2 ? '16 / 10' : a.w >= 1 ? (phone ? '3 / 2' : '4 / 5') : '3 / 2';
               return (
                 <AnimateIn key={a.id} delay={0.04 * (i % 6)} y={26} duration={0.6} style={{ gridColumn: `span ${span}` }}>
                   <motion.div
@@ -266,7 +325,7 @@ export default function Exhibition() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: 40,
+              padding: phone ? '10px 10px calc(10px + var(--safe-bottom))' : tablet ? 24 : 40,
             }}
           >
             <motion.div
@@ -277,36 +336,83 @@ export default function Exhibition() {
               onClick={(e) => e.stopPropagation()}
               className="glass glass-strong"
               style={{
-                maxWidth: 'min(90vw, 700px)',
-                maxHeight: '90vh',
-                borderRadius: 20,
+                width: phone ? '100%' : undefined,
+                maxWidth: phone ? '100%' : tablet ? 'min(92vw, 700px)' : 'min(90vw, 700px)',
+                maxHeight: phone ? 'calc(100dvh - 24px)' : '90vh',
+                borderRadius: phone ? 16 : 20,
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
               }}
             >
               <div style={{ position: 'relative', overflow: 'hidden', flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
-                <img src={active.url} alt={t(active.titleZh, active.titleEn)} style={{ maxWidth: '100%', maxHeight: '60vh', display: 'block', objectFit: 'contain' }} />
+                {/* 图片层可左右拖动;dragSnapToOrigin 保证松手/换图后偏移自动复位 */}
+                <motion.div
+                  drag={canSwipe ? 'x' : false}
+                  dragDirectionLock
+                  dragConstraints={{ left: -96, right: 96 }}
+                  dragElastic={0.22}
+                  dragMomentum={false}
+                  dragSnapToOrigin
+                  onDragEnd={swipeHandler(prev, next)}
+                  style={{
+                    width: '100%',
+                    maxWidth: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: canSwipe ? 'grab' : 'default',
+                  }}
+                >
+                  <img
+                    src={active.url}
+                    alt={t(active.titleZh, active.titleEn)}
+                    draggable={false}
+                    style={{ maxWidth: '100%', maxHeight: phone ? '46dvh' : tablet ? '56dvh' : '60vh', display: 'block', objectFit: 'contain' }}
+                  />
+                </motion.div>
 
-                <button onClick={() => setActive(null)} style={{ position: 'absolute', top: 12, right: 12, width: 38, height: 38, borderRadius: 10, background: 'rgba(0,0,0,0.45)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <button
+                  aria-label={t('关闭', 'Close')}
+                  onClick={() => setActive(null)}
+                  style={{ position: 'absolute', top: phone ? 8 : 12, right: phone ? 8 : 12, zIndex: 2, width: phone ? 44 : 38, height: phone ? 44 : 38, borderRadius: 10, background: 'rgba(0,0,0,0.45)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                >
                   <X size={18} />
                 </button>
-                <button onClick={(e) => { e.stopPropagation(); prev(); }} style={{ position: 'absolute', top: '50%', left: 12, transform: 'translateY(-50%)', width: 42, height: 42, borderRadius: 12, background: 'rgba(0,0,0,0.45)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <button
+                  aria-label={t('上一张', 'Previous')}
+                  onClick={(e) => { e.stopPropagation(); prev(); }}
+                  style={{ position: 'absolute', top: '50%', left: phone ? 8 : 12, transform: 'translateY(-50%)', zIndex: 2, width: phone ? 46 : 42, height: phone ? 46 : 42, borderRadius: 12, background: 'rgba(0,0,0,0.45)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                >
                   <ChevronLeft size={20} />
                 </button>
-                <button onClick={(e) => { e.stopPropagation(); next(); }} style={{ position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)', width: 42, height: 42, borderRadius: 12, background: 'rgba(0,0,0,0.45)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <button
+                  aria-label={t('下一张', 'Next')}
+                  onClick={(e) => { e.stopPropagation(); next(); }}
+                  style={{ position: 'absolute', top: '50%', right: phone ? 8 : 12, transform: 'translateY(-50%)', zIndex: 2, width: phone ? 46 : 42, height: phone ? 46 : 42, borderRadius: 12, background: 'rgba(0,0,0,0.45)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                >
                   <ChevronRight size={20} />
                 </button>
               </div>
 
-              <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <h3 style={{ fontSize: 18, fontWeight: 800 }}>{t(active.titleZh, active.titleEn)}</h3>
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              <div
+                style={{
+                  flexShrink: phone || tablet ? 0 : undefined,
+                  padding: phone ? '14px 16px 16px' : '20px 24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                  maxHeight: phone ? '46dvh' : undefined,
+                  overflowY: phone ? 'auto' : undefined,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: phone || tablet ? 10 : undefined }}>
+                  <h3 style={{ fontSize: phone ? 16 : 18, fontWeight: 800 }}>{t(active.titleZh, active.titleEn)}</h3>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)', flexShrink: phone || tablet ? 0 : undefined }}>
                     {idx + 1} / {visible.length}
                   </span>
                 </div>
-                <div style={{ display: 'flex', gap: 14, fontSize: 12, color: 'var(--text-muted)', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: phone ? 8 : 14, fontSize: 12, color: 'var(--text-muted)', flexWrap: 'wrap' }}>
                   <span>{t(active.artistZh, active.artistEn)}</span>
                   <span>·</span>
                   <span>{active.year}</span>
@@ -318,6 +424,11 @@ export default function Exhibition() {
                 <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7, marginTop: 4 }}>
                   {t(active.descZh, active.descEn)}
                 </p>
+                {canSwipe && (phone || tablet) && (
+                  <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                    {t('← 左右滑动切换作品 →', '← Swipe to browse works →')}
+                  </p>
+                )}
               </div>
             </motion.div>
           </motion.div>

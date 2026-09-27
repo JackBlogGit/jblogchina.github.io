@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Search, X } from 'lucide-react';
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { useDevice } from '../hooks/useDevice';
 
 interface Props {
   onSearch?: (q: string) => void;
@@ -12,10 +13,14 @@ interface Props {
 
 export default function SearchBar({ onSearch, onChange, initialValue = '', placeholder }: Props) {
   const { t } = useApp();
+  const { isMobile, isTablet } = useDevice();
   const [q, setQ] = useState(initialValue);
   const [focused, setFocused] = useState(false);
 
   const ph = placeholder ?? t('搜索内容、标签、作者...', 'Search content, tags, author...');
+
+  /* 固定 px 宽在手机上会冲出容器（聚焦 520px > 390px 屏宽），改为流式宽度 */
+  const barWidth = isMobile ? '100%' : isTablet && focused ? '100%' : focused ? 520 : 280;
 
   const update = (val: string) => {
     setQ(val);
@@ -32,9 +37,10 @@ export default function SearchBar({ onSearch, onChange, initialValue = '', place
         display: 'flex',
         alignItems: 'center',
         gap: 10,
-        padding: focused ? '12px 18px' : '10px 16px',
+        padding: isMobile ? '8px 8px 8px 14px' : focused ? '12px 18px' : '10px 16px',
         borderRadius: 18,
-        width: focused ? 520 : 280,
+        width: barWidth,
+        maxWidth: isMobile ? undefined : 520,
         margin: '10px auto',
         transition: 'width 0.4s cubic-bezier(0.22, 1, 0.36, 1)',
       }}
@@ -53,7 +59,8 @@ export default function SearchBar({ onSearch, onChange, initialValue = '', place
           flex: 1,
           background: 'transparent',
           color: 'var(--text-primary)',
-          fontSize: 14,
+          /* 手机上内联 14px 会盖掉 index.css 的 16px 防缩放规则，iOS 聚焦即放大页面 */
+          fontSize: isMobile ? 16 : 14,
           minWidth: 0,
         }}
       />
@@ -63,7 +70,15 @@ export default function SearchBar({ onSearch, onChange, initialValue = '', place
           animate={{ scale: 1 }}
           whileTap={{ scale: 0.85 }}
           onClick={() => update('')}
-          style={{ color: 'var(--text-muted)', display: 'flex' }}
+          style={{
+            color: 'var(--text-muted)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: isMobile ? 44 : undefined,
+            height: isMobile ? 44 : undefined,
+            marginRight: isMobile ? -8 : undefined,
+          }}
           aria-label="clear"
         >
           <X size={16} />
@@ -74,12 +89,13 @@ export default function SearchBar({ onSearch, onChange, initialValue = '', place
         whileTap={{ scale: 0.95 }}
         onClick={() => onSearch?.(q)}
         style={{
-          padding: '6px 14px',
+          padding: isMobile ? '12px 16px' : '6px 14px',
+          minHeight: isMobile ? 44 : undefined,
           borderRadius: 10,
           background: 'var(--accent)',
           color: '#fff',
           fontWeight: 600,
-          fontSize: 13,
+          fontSize: isMobile ? 14 : 13,
           flexShrink: 0,
         }}
       >

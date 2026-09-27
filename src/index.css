@@ -25,6 +25,12 @@
   --accent: #6366f1;
   --accent-soft: rgba(99, 102, 241, 0.18);
   --border-subtle: rgba(255, 255, 255, 0.35);
+
+  /* 刘海屏/圆角屏安全区：不支持 env() 时回退 0 */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
 }
 
 [data-theme='dark'] {
@@ -231,6 +237,17 @@ input {
    ======================================================== */
 html {
   -webkit-text-size-adjust: 100%;
+  /* 去掉安卓/iOS 点按时的灰蓝高亮块，玻璃质感下更干净 */
+  -webkit-tap-highlight-color: transparent;
+}
+
+a,
+button,
+[role='button'],
+input[type='checkbox'],
+input[type='radio'] {
+  /* 移动端双击缩放会拦截按钮点击并带来 ~300ms 延迟 */
+  touch-action: manipulation;
 }
 
 @media (max-width: 767px) {
@@ -239,16 +256,73 @@ html {
     height: 0;
   }
 
-  /* 触屏无悬停：去掉 hover 增强，避免点击后"卡住"的高亮 */
+  /* iOS 聚焦 <16px 的输入框会自动放大整个页面且不会还原 */
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+/* 触屏设备：没有可靠 hover，去掉 hover 增强，避免点完"卡住"的高亮 */
+@media (hover: none) {
   .glass:hover {
     box-shadow: var(--glass-shadow);
   }
 
   .glass:hover .exh-overlay,
-  .glass:hover .exh-caption {
+  .glass:hover .exh-caption,
+  .glass:hover .gallery-overlay,
+  .glass:hover .gallery-caption {
     opacity: 0;
   }
+
+  /* 触屏上 hover 永远不会触发，说明文字必须常驻可见，否则等于没有标题 */
+  .exh-overlay,
+  .exh-caption,
+  .gallery-overlay,
+  .gallery-caption {
+    opacity: 1;
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.55) 0%,
+      rgba(0, 0, 0, 0) 100%
+    );
+  }
 }
+
+/* 窄屏下需要横向滚动的内容（表格、代码块、标签行、缩略图条） */
+.scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+/* 隐藏滚动条但保留滚动，配合 scroll-x 用于胶囊标签栏 */
+.scroll-x--bare {
+  scrollbar-width: none;
+}
+.scroll-x--bare::-webkit-scrollbar {
+  height: 0;
+  width: 0;
+}
+
+/* 最小可点击尺寸，替代散落在各处的 26/32/36px 小按钮 */
+.tap {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.safe-x {
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+}
+
+.safe-b {
+  padding-bottom: var(--safe-bottom);
+}
+
 
 /* ========================================================
    HI-SHAKE — "嗨一下" text bounce effect

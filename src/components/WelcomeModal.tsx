@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Sparkles, X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useDevice } from '../hooks/useDevice';
 
 const SEEN_KEY = 'welcome-modal-seen';
 
 export default function WelcomeModal() {
   const { t } = useApp();
+  const { isMobile } = useDevice();
   const [open, setOpen] = useState(() => {
     try {
       return sessionStorage.getItem(SEEN_KEY) == null;
@@ -43,7 +45,7 @@ export default function WelcomeModal() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: 24,
+            padding: isMobile ? 16 : 24,
           }}
         >
           <motion.div
@@ -56,20 +58,25 @@ export default function WelcomeModal() {
             style={{
               width: 'min(420px, 100%)',
               borderRadius: 24,
-              padding: '36px 32px 30px',
+              padding: isMobile ? '34px 20px 26px' : '36px 32px 30px',
               textAlign: 'center',
               pointerEvents: 'auto',
+              /* 横屏手机上弹窗必须能自己滚，否则按钮被裁掉 */
+              maxHeight: isMobile ? 'calc(100% - 8px)' : undefined,
+              overflowY: isMobile ? 'auto' : undefined,
+              overflowX: isMobile ? 'hidden' : undefined,
             }}
           >
-            <button
+            <motion.button
+              whileTap={{ scale: 0.88 }}
               onClick={close}
               aria-label={t('关闭', 'Close')}
               style={{
                 position: 'absolute',
-                top: 14,
-                right: 14,
-                width: 32,
-                height: 32,
+                top: isMobile ? 8 : 14,
+                right: isMobile ? 8 : 14,
+                width: isMobile ? 44 : 32,
+                height: isMobile ? 44 : 32,
                 borderRadius: '50%',
                 border: '1px solid var(--glass-border)',
                 background: 'var(--glass-bg)',
@@ -81,8 +88,8 @@ export default function WelcomeModal() {
                 zIndex: 2,
               }}
             >
-              <X size={16} />
-            </button>
+              <X size={isMobile ? 18 : 16} />
+            </motion.button>
 
             <motion.div
               animate={{ rotate: [0, 14, -10, 0] }}
@@ -106,7 +113,7 @@ export default function WelcomeModal() {
 
             <h2
               style={{
-                fontSize: 24,
+                fontSize: isMobile ? 21 : 24,
                 fontWeight: 800,
                 color: 'var(--text-primary)',
                 marginBottom: 10,
@@ -119,7 +126,7 @@ export default function WelcomeModal() {
                 fontSize: 14,
                 lineHeight: 1.8,
                 color: 'var(--text-secondary)',
-                marginBottom: 26,
+                marginBottom: isMobile ? 22 : 26,
               }}
             >
               {t(
@@ -134,6 +141,7 @@ export default function WelcomeModal() {
               onClick={close}
               style={{
                 padding: '12px 36px',
+                minHeight: isMobile ? 44 : undefined,
                 borderRadius: 999,
                 border: 'none',
                 cursor: 'pointer',
