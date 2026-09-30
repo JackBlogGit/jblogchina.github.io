@@ -15,7 +15,7 @@ function CameraModel({ url, mouse, still = false }: { url: string; mouse: React.
     const box = new THREE.Box3().setFromObject(scene);
     const size = box.getSize(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z);
-    const scale = 4.5 / maxDim;
+    const scale = 3.2 / maxDim;
     scene.scale.setScalar(scale);
 
     const center = box.getCenter(new THREE.Vector3());
