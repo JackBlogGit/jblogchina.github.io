@@ -3,56 +3,10 @@ const BOT_UA =
 
 export interface GuardEnv {
   userAgent: string;
-  referrer: string;
-  dev: boolean;
 }
 
 function realEnv(): GuardEnv {
-  return { userAgent: navigator.userAgent, referrer: document.referrer, dev: import.meta.env.DEV };
-}
-
-/** 允许的同源/本地来源；其余站点的 Referer 视为盗链 */
-function isAllowedOrigin(origin: string): boolean {
-  try {
-    const url = new URL(origin);
-    if (url.origin === location.origin || url.hostname === location.hostname) return true;
-    return url.hostname === 'localhost' || url.hostname === '127.0.0.1';
-  } catch {
-    return false;
-  }
-}
-
-/** 正常访客来源：搜索引擎 / 社交与 IM 分享 / 社区与代码托管 / 网页邮箱，命中即放行 */
-const TRUSTED_REFERRER_HOSTS = [
-  'google.', 'bing.', 'baidu.', 'sogou.', 'so.com', 'sm.cn', 'duckduckgo.', 'yahoo.', 'yandex.', 'ecosia.', 'search.brave.',
-  'weibo.', 'weixin.qq.com', 'qq.com', 't.me', 'telegram.', 'discord.', 'slack.', 'messenger.com', 'threads.net',
-  'facebook.', 'instagram.', 'twitter.com', 'x.com', 't.co', 'wa.me', 'linkedin.', 'reddit.com', 'youtube.com',
-  'github.', 'github.io', 'gitlab.', 'gitee.', 'zhihu.', 'bilibili.', 'juejin.', 'csdn.', 'segmentfault.', 'v2ex.',
-  'medium.com', 'dev.to', 'stackoverflow.',
-  'mail.', 'gmail.', 'outlook.live.', '163.com', '126.com',
-];
-
-function isTrustedReferrer(referrer: string): boolean {
-  try {
-    const url = new URL(referrer);
-    // file: / 浏览器扩展页 / about: 等没有真实站点，不算盗链
-    if (url.protocol !== 'http:' && url.protocol !== 'https:') return true;
-    const host = url.hostname.toLowerCase();
-    if (host === 'localhost' || host === '127.0.0.1') return true;
-    return TRUSTED_REFERRER_HOSTS.some((d) => host.includes(d));
-  } catch {
-    return true; // about:blank、null 之类解析不出来的来源，不误伤正常访客
-  }
-}
-
-function hotlinked(referrer: string): boolean {
-  if (!referrer) return false; // 直接访问 / 无 Referer：交由服务端策略
-  try {
-    if (isAllowedOrigin(new URL(referrer).origin)) return false;
-  } catch {
-    return false;
-  }
-  return !isTrustedReferrer(referrer);
+  return { userAgent: navigator.userAgent };
 }
 
 function stripImages() {
@@ -84,7 +38,7 @@ function shieldImages() {
   }).observe(document.documentElement, { childList: true, subtree: true });
 }
 
-/** 全站防盗链 + 防爬虫基线防护（前端层，真正拦截以服务端为准） */
+/** 全站防爬虫基线防护（前端层，真正拦截以服务端为准）；不按访问来源拦截 */
 export function runSiteGuard(env: GuardEnv) {
   shieldImages();
 
@@ -92,12 +46,6 @@ export function runSiteGuard(env: GuardEnv) {
     stripImages();
     document.documentElement.dataset.crawler = '1';
     return 'crawler' as const;
-  }
-
-  // Referer 校验只在构建产物中生效，避免本地预览被误伤
-  if (!env.dev && hotlinked(env.referrer)) {
-    stripImages();
-    return 'hotlink' as const;
   }
   return 'pass' as const;
 }
@@ -107,10 +55,9 @@ export function startSiteGuard() {
 }
 
 if (import.meta.env.DEV) {
-  // 本地自测：/assets/site-guard.selftest.ts 由测试脚本调用 runSiteGuard 注入假环境
+  // 本地自测：dev 环境下控制台调用 runSiteGuard({ userAgent }) 注入假 UA 验证分支
   (window as unknown as { __siteGuard?: unknown }).__siteGuard = {
     runSiteGuard,
-    hotlinked,
     isBot: (ua: string) => BOT_UA.test(ua),
     env: realEnv,
   };
