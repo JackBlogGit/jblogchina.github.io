@@ -22,13 +22,37 @@ function isAllowedOrigin(origin: string): boolean {
   }
 }
 
+/** 正常访客来源：搜索引擎 / 社交与 IM 分享 / 社区与代码托管 / 网页邮箱，命中即放行 */
+const TRUSTED_REFERRER_HOSTS = [
+  'google.', 'bing.', 'baidu.', 'sogou.', 'so.com', 'sm.cn', 'duckduckgo.', 'yahoo.', 'yandex.', 'ecosia.', 'search.brave.',
+  'weibo.', 'weixin.qq.com', 'qq.com', 't.me', 'telegram.', 'discord.', 'slack.', 'messenger.com', 'threads.net',
+  'facebook.', 'instagram.', 'twitter.com', 'x.com', 't.co', 'wa.me', 'linkedin.', 'reddit.com', 'youtube.com',
+  'github.', 'github.io', 'gitlab.', 'gitee.', 'zhihu.', 'bilibili.', 'juejin.', 'csdn.', 'segmentfault.', 'v2ex.',
+  'medium.com', 'dev.to', 'stackoverflow.',
+  'mail.', 'gmail.', 'outlook.live.', '163.com', '126.com',
+];
+
+function isTrustedReferrer(referrer: string): boolean {
+  try {
+    const url = new URL(referrer);
+    // file: / 浏览器扩展页 / about: 等没有真实站点，不算盗链
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return true;
+    const host = url.hostname.toLowerCase();
+    if (host === 'localhost' || host === '127.0.0.1') return true;
+    return TRUSTED_REFERRER_HOSTS.some((d) => host.includes(d));
+  } catch {
+    return true; // about:blank、null 之类解析不出来的来源，不误伤正常访客
+  }
+}
+
 function hotlinked(referrer: string): boolean {
   if (!referrer) return false; // 直接访问 / 无 Referer：交由服务端策略
   try {
-    return !isAllowedOrigin(new URL(referrer).origin);
+    if (isAllowedOrigin(new URL(referrer).origin)) return false;
   } catch {
     return false;
   }
+  return !isTrustedReferrer(referrer);
 }
 
 function stripImages() {
@@ -60,36 +84,6 @@ function shieldImages() {
   }).observe(document.documentElement, { childList: true, subtree: true });
 }
 
-function showBlockedNotice() {
-  const box = document.createElement('div');
-  box.setAttribute(
-    'data-hotlink-blocked',
-    '1',
-  );
-  box.setAttribute(
-    'style',
-    [
-      'position:fixed',
-      'inset:0',
-      'z-index:2147483647',
-      'display:flex',
-      'align-items:center',
-      'justify-content:center',
-      'flex-direction:column',
-      'gap:12px',
-      'padding:24px',
-      'text-align:center',
-      'background:#0b0d12',
-      'color:#e8ebf2',
-      "font-family:system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif",
-    ].join(';'),
-  );
-  box.innerHTML =
-    '<div style="font-size:22px;font-weight:700">本站已阻止该访问</div>' +
-    '<div style="font-size:14px;opacity:.7;line-height:1.8">资源防盗链保护中，请从本站正常访问。</div>';
-  document.documentElement.appendChild(box);
-}
-
 /** 全站防盗链 + 防爬虫基线防护（前端层，真正拦截以服务端为准） */
 export function runSiteGuard(env: GuardEnv) {
   shieldImages();
@@ -103,7 +97,6 @@ export function runSiteGuard(env: GuardEnv) {
   // Referer 校验只在构建产物中生效，避免本地预览被误伤
   if (!env.dev && hotlinked(env.referrer)) {
     stripImages();
-    showBlockedNotice();
     return 'hotlink' as const;
   }
   return 'pass' as const;

@@ -37,7 +37,7 @@ See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rule
 
 1. 前端守卫 `src/utils/siteGuard.ts`（在 `src/main.tsx` 中启动）
    - 识别到爬虫 UA / headless 工具时隐藏全部图片，并给 `<html>` 打 `data-crawler="1"`；
-   - 构建产物中校验 `document.referrer`，非本站来源直接剥除图片并显示拦截页（dev 环境不生效，避免本地预览被误伤）；
+   - 构建产物中校验 `document.referrer`：搜索引擎、社交/IM 分享、社区与代码托管、网页邮箱、`file://` 等正常来源在白名单内直接放行，白名单之外的跨源来源只剥除图片、不遮挡页面（dev 环境不生效，避免本地预览被误伤）；
    - 全站图片禁用拖拽保存与右键菜单（自动覆盖后续渲染出的 `<img>`）。
    本地自测：dev 环境下浏览器控制台可用 `window.__siteGuard.runSiteGuard({ userAgent, referrer, dev })` 注入假环境，验证 `crawler` / `hotlink` / `pass` 三条分支。
 2. 爬虫协议 `public/robots.txt`：默认 `Disallow: /`（同时关闭搜索引擎收录），并显式列出主流 AI 抓取器与国内爬虫。需要被收录时把首段改成只禁 `/admin`。
